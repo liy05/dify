@@ -11,6 +11,7 @@ import {
   RiInformation2Line,
   RiLogoutBoxRLine,
   RiMap2Line,
+  RiRobot2Line,
   RiSettings3Line,
   RiStarLine,
   RiTShirt2Line,
@@ -124,6 +125,30 @@ export default function AppSelector() {
                         <RiSettings3Line className='size-4 shrink-0 text-text-tertiary' />
                         <div className='system-md-regular grow px-1 text-text-secondary'>{t('common.userProfile.settings')}</div>
                       </div>
+                    </MenuItem>
+                    <MenuItem>
+                      <Link
+                        className={cn(itemClassName, 'group',
+                          'data-[active]:bg-state-base-hover',
+                        )}
+                        href='/agent-config'
+                        target='_self' rel='noopener noreferrer'>
+                        <RiRobot2Line className='size-4 shrink-0 text-text-tertiary' />
+                        <div className='system-md-regular grow px-1 text-text-secondary'>首页智能体维护</div>
+                        <RiArrowRightUpLine className='size-[14px] shrink-0 text-text-tertiary' />
+                      </Link>
+                    </MenuItem>
+                    <MenuItem>
+                      <Link
+                        className={cn(itemClassName, 'group',
+                          'data-[active]:bg-state-base-hover',
+                        )}
+                        href='/apps'
+                        target='_self' rel='noopener noreferrer'>
+                        <RiRobot2Line className='size-4 shrink-0 text-text-tertiary' />
+                        <div className='system-md-regular grow px-1 text-text-secondary'>智能体管理</div>
+                        <RiArrowRightUpLine className='size-[14px] shrink-0 text-text-tertiary' />
+                      </Link>
                     </MenuItem>
                   </div>
                   {!systemFeatures.branding.enabled && <>

@@ -165,6 +165,8 @@ api.add_resource(
 )
 
 # Import tag controllers
+# Import agent controllers
+from .agent import agent_category
 from .tag import tags
 
 # Import workspace controllers

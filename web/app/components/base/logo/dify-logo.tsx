@@ -2,8 +2,8 @@
 import type { FC } from 'react'
 import classNames from '@/utils/classnames'
 import useTheme from '@/hooks/use-theme'
-import { basePath } from '@/utils/var'
 import { useGlobalPublicStore } from '@/context/global-public-context'
+
 export type LogoStyle = 'default' | 'monochromeWhite'
 
 export const logoPathMap: Record<LogoStyle, string> = {
@@ -35,16 +35,39 @@ const DifyLogo: FC<DifyLogoProps> = ({
   const { systemFeatures } = useGlobalPublicStore()
   const hasBrandingLogo = Boolean(systemFeatures.branding.enabled && systemFeatures.branding.workspace_logo)
 
-  let src = `${basePath}${logoPathMap[themedStyle]}`
-  if (hasBrandingLogo)
-    src = systemFeatures.branding.workspace_logo
-
   return (
-    <img
-      src={src}
-      className={classNames('block object-contain', logoSizeMap[size], hasBrandingLogo && 'w-auto', className)}
-      alt={hasBrandingLogo ? 'Logo' : 'Dify logo'}
-    />
+    <div className="flex items-center">
+      <svg
+        width={size === 'large' ? 32 : size === 'medium' ? 24 : 20}
+        height={size === 'large' ? 32 : size === 'medium' ? 24 : 20}
+        viewBox="0 0 32 32"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className={classNames('mr-2', className)}
+      >
+        <rect
+          width="32"
+          height="32"
+          rx="8"
+          fill={themedStyle === 'monochromeWhite' ? '#FFFFFF' : '#3B82F6'}
+        />
+        <path
+          d="M8 12h4l4 8h-2l-1-2h-4l-1 2H6l4-8zm2 2l-1 2h2l-1-2z"
+          fill="white"
+        />
+        <path
+          d="M18 12h2v8h-2v-8z"
+          fill="white"
+        />
+      </svg>
+      <span className={classNames(
+        'font-bold',
+        size === 'large' ? 'text-xl' : size === 'medium' ? 'text-lg' : 'text-base',
+        themedStyle === 'monochromeWhite' ? 'text-white' : 'text-gray-900',
+      )}>
+        AI服务平台
+      </span>
+    </div>
   )
 }
 
