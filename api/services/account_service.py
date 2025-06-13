@@ -205,6 +205,8 @@ class AccountService:
         password: Optional[str] = None,
         interface_theme: str = "light",
         is_setup: Optional[bool] = False,
+        wechat_work_id: Optional[str] = None,
+        phone: Optional[str] = None,
     ) -> Account:
         """create account"""
         if not FeatureService.get_system_features().is_allow_register and not is_setup:
@@ -238,6 +240,12 @@ class AccountService:
 
         account.interface_language = interface_language
         account.interface_theme = interface_theme
+        
+        # Set new fields
+        if wechat_work_id:
+            account.wechat_work_id = wechat_work_id
+        if phone:
+            account.phone = phone
 
         # Set timezone based on language
         account.timezone = language_timezone_mapping.get(interface_language, "UTC")
@@ -858,6 +866,42 @@ class TenantService:
         tenant = db.get_or_404(Tenant, tenant_id)
 
         return cast(dict, tenant.custom_config_dict)
+
+    @staticmethod
+    def add_member_to_tenant(
+        tenant: Tenant,
+        account: Account,
+        role: str = "normal",
+        operator: Account = None,
+        inviter: Account = None
+    ) -> TenantAccountJoin:
+        """Add member to tenant
+        
+        Args:
+            tenant: The tenant to add member to
+            account: The account to add
+            role: The role of the member (default: "normal")
+            operator: The account performing the operation (for permission check)
+            inviter: The account who invited the member (optional)
+        """
+        if operator:
+            TenantService.check_member_permission(tenant, operator, account, "add")
+
+        # Check if account is already in tenant
+        ta = db.session.query(TenantAccountJoin).filter_by(tenant_id=tenant.id, account_id=account.id).first()
+        if ta:
+            raise AccountAlreadyInTenantError("Account already in tenant.")
+
+        # Create new tenant member
+        ta = TenantAccountJoin(
+            tenant_id=tenant.id, 
+            account_id=account.id, 
+            role=role,
+            invited_by=inviter.id if inviter else None
+        )
+        db.session.add(ta)
+        db.session.commit()
+        return ta
 
 
 class RegisterService:

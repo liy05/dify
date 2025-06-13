@@ -32,6 +32,8 @@ export type UserProfileResponse = {
   last_active_at?: string
   last_login_ip?: string
   created_at?: string
+  wechat_work_id?: string
+  phone?: string
 }
 
 export type UserProfileOriginResponse = {
@@ -64,7 +66,7 @@ export type TenantInfoResponse = {
   trial_end_reason: null | 'trial_exceeded' | 'using_custom'
 }
 
-export type Member = Pick<UserProfileResponse, 'id' | 'name' | 'email' | 'last_login_at' | 'last_active_at' | 'created_at' | 'avatar_url'> & {
+export type Member = Pick<UserProfileResponse, 'id' | 'name' | 'email' | 'last_login_at' | 'last_active_at' | 'created_at' | 'avatar_url' | 'wechat_work_id' | 'phone'> & {
   avatar: string
   status: 'pending' | 'active' | 'banned' | 'closed'
   role: 'owner' | 'admin' | 'editor' | 'normal' | 'dataset_operator'

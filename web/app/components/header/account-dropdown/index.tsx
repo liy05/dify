@@ -15,6 +15,7 @@ import {
   RiSettings3Line,
   RiStarLine,
   RiTShirt2Line,
+  RiTeamLine,
 } from '@remixicon/react'
 import Link from 'next/link'
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from '@headlessui/react'
@@ -45,7 +46,7 @@ export default function AppSelector() {
   const { systemFeatures } = useGlobalPublicStore()
 
   const { t } = useTranslation()
-  const { userProfile, langeniusVersionInfo, isCurrentWorkspaceOwner } = useAppContext()
+  const { userProfile, langeniusVersionInfo, isCurrentWorkspaceOwner, currentWorkspace } = useAppContext()
   const { isEducationAccount } = useProviderContext()
   const { setShowAccountSettingModal } = useModalContext()
   const docLanguage = useGetDocLanguage()
@@ -126,6 +127,20 @@ export default function AppSelector() {
                         <div className='system-md-regular grow px-1 text-text-secondary'>{t('common.userProfile.settings')}</div>
                       </div>
                     </MenuItem>
+                    {(isCurrentWorkspaceOwner || currentWorkspace.role === 'admin') && (
+                      <MenuItem>
+                        <Link
+                          className={cn(itemClassName, 'group',
+                            'data-[active]:bg-state-base-hover',
+                          )}
+                          href='/user-management'
+                          target='_self' rel='noopener noreferrer'>
+                          <RiTeamLine className='size-4 shrink-0 text-text-tertiary' />
+                          <div className='system-md-regular grow px-1 text-text-secondary'>用户管理</div>
+                          <RiArrowRightUpLine className='size-[14px] shrink-0 text-text-tertiary' />
+                        </Link>
+                      </MenuItem>
+                    )}
                     <MenuItem>
                       <Link
                         className={cn(itemClassName, 'group',

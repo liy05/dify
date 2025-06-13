@@ -82,7 +82,12 @@ class AccountStatus(enum.StrEnum):
 
 class Account(UserMixin, Base):
     __tablename__ = "accounts"
-    __table_args__ = (db.PrimaryKeyConstraint("id", name="account_pkey"), db.Index("account_email_idx", "email"))
+    __table_args__ = (
+        db.PrimaryKeyConstraint("id", name="account_pkey"), 
+        db.Index("account_email_idx", "email"),
+        db.Index("account_wechat_work_id_idx", "wechat_work_id"),
+        db.Index("account_phone_idx", "phone")
+    )
 
     id: Mapped[str] = mapped_column(StringUUID, server_default=db.text("uuid_generate_v4()"))
     name = db.Column(db.String(255), nullable=False)
@@ -100,6 +105,9 @@ class Account(UserMixin, Base):
     initialized_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, nullable=False, server_default=func.current_timestamp())
     updated_at = db.Column(db.DateTime, nullable=False, server_default=func.current_timestamp())
+    # 新增字段
+    wechat_work_id = db.Column(db.String(255), nullable=True, comment="企业微信ID")
+    phone = db.Column(db.String(20), nullable=True, comment="手机号码")
 
     @reconstructor
     def init_on_load(self):

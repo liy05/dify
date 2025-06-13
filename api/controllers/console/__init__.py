@@ -68,7 +68,16 @@ from .app import (
 )
 
 # Import auth controllers
-from .auth import activate, data_source_bearer_auth, data_source_oauth, forgot_password, login, oauth
+from .auth import (
+    activate,
+    data_source_bearer_auth,
+    data_source_oauth,
+    forgot_password,
+    login,
+    oauth,
+    phone_sms,
+    wechat_work,
+)
 
 # Import billing controllers
 from .billing import billing, compliance
@@ -180,5 +189,6 @@ from .workspace import (
     models,
     plugin,
     tool_providers,
+    user_management,
     workspace,
 )
