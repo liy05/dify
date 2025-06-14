@@ -1,6 +1,7 @@
 import enum
 import json
 from typing import Optional, cast
+from datetime import datetime
 
 from flask_login import UserMixin  # type: ignore
 from sqlalchemy import func
@@ -86,7 +87,8 @@ class Account(UserMixin, Base):
         db.PrimaryKeyConstraint("id", name="account_pkey"), 
         db.Index("account_email_idx", "email"),
         db.Index("account_wechat_work_id_idx", "wechat_work_id"),
-        db.Index("account_phone_idx", "phone")
+        db.Index("account_phone_idx", "phone"),
+        db.UniqueConstraint('email', name='uix_email'),
     )
 
     id: Mapped[str] = mapped_column(StringUUID, server_default=db.text("uuid_generate_v4()"))

@@ -24,15 +24,17 @@ const Header = () => {
   const systemFeatures = useGlobalPublicStore(s => s.systemFeatures)
 
   return (
-    <div className='flex w-full items-center justify-between p-6'>
-      {systemFeatures.branding.enabled && systemFeatures.branding.login_page_logo
-        ? <img
-          src={systemFeatures.branding.login_page_logo}
-          className='block h-7 w-auto object-contain'
-          alt='logo'
-        />
-        : <DifyLogo size='large' />}
-      <div className='flex items-center gap-1'>
+    <div className='flex min-h-[80px] w-full items-center justify-between p-6'>
+      <div className="shrink-0">
+        {systemFeatures.branding.enabled && systemFeatures.branding.login_page_logo
+          ? <img
+            src={systemFeatures.branding.login_page_logo}
+            className='block h-7 w-auto object-contain'
+            alt='logo'
+          />
+          : <DifyLogo size='large' />}
+      </div>
+      <div className='flex shrink-0 items-center gap-1'>
         <Select
           value={locale}
           items={languages.filter(item => item.supported)}

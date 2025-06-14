@@ -376,3 +376,23 @@ export const submitDeleteAccountFeedback = (body: { feedback: string; email: str
 
 export const getDocDownloadUrl = (doc_name: string) =>
   get<{ url: string }>('/compliance/download', { params: { doc_name } }, { silent: true })
+
+export const sendPhoneLoginCode = async (phone: string, language: string) => {
+  return post<CommonResponse & { data: string }>('/phone/send-verification-code', { body: { phone, language } })
+}
+
+export const phoneLoginWithCode = async ({ phone, code, token }: { phone: string; code: string; token: string }) => {
+  return post<LoginResponse>('/phone/login', { body: { phone, code, token } })
+}
+
+export const bindPhone = async ({ phone, code }: { phone: string; code: string }) => {
+  return post<CommonResponse>('/auth/phone/bind', { body: { phone, code } })
+}
+
+export const unbindPhone = async () => {
+  return del<CommonResponse>('/auth/phone/bind')
+}
+
+export const getSocialAuthUrl = async (provider: string, language: string) => {
+  return get<CommonResponse & { data: string }>(`/auth/social/${provider}?language=${language}`)
+}

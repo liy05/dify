@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { RiContractLine, RiDoorLockLine, RiErrorWarningFill } from '@remixicon/react'
 import Loading from '../components/base/loading'
@@ -8,11 +7,11 @@ import MailAndCodeAuth from './components/mail-and-code-auth'
 import MailAndPasswordAuth from './components/mail-and-password-auth'
 import SocialAuth from './components/social-auth'
 import SSOAuth from './components/sso-auth'
+import PhoneAndCodeAuth from './components/phone-and-code-auth'
 import cn from '@/utils/classnames'
 import { invitationCheck } from '@/service/common'
 import { LicenseStatus } from '@/types/feature'
 import Toast from '@/app/components/base/toast'
-import { IS_CE_EDITION } from '@/config'
 import { useGlobalPublicStore } from '@/context/global-public-context'
 
 const NormalForm = () => {
@@ -25,7 +24,7 @@ const NormalForm = () => {
   const invite_token = decodeURIComponent(searchParams.get('invite_token') || '')
   const [isLoading, setIsLoading] = useState(true)
   const { systemFeatures } = useGlobalPublicStore()
-  const [authType, updateAuthType] = useState<'code' | 'password'>('password')
+  const [authType, updateAuthType] = useState<'code' | 'password' | 'phone'>('password')
   const [showORLine, setShowORLine] = useState(false)
   const [allMethodsAreDisabled, setAllMethodsAreDisabled] = useState(false)
   const [workspaceName, setWorkSpaceName] = useState('')
@@ -47,8 +46,8 @@ const NormalForm = () => {
           message,
         })
       }
-      setAllMethodsAreDisabled(!systemFeatures.enable_social_oauth_login && !systemFeatures.enable_email_code_login && !systemFeatures.enable_email_password_login && !systemFeatures.sso_enforced_for_signin)
-      setShowORLine((systemFeatures.enable_social_oauth_login || systemFeatures.sso_enforced_for_signin) && (systemFeatures.enable_email_code_login || systemFeatures.enable_email_password_login))
+      setAllMethodsAreDisabled(!systemFeatures.enable_social_oauth_login && !systemFeatures.enable_email_code_login && !systemFeatures.enable_email_password_login && !systemFeatures.enable_phone_login && !systemFeatures.sso_enforced_for_signin)
+      setShowORLine((systemFeatures.enable_social_oauth_login || systemFeatures.sso_enforced_for_signin) && (systemFeatures.enable_email_code_login || systemFeatures.enable_email_password_login || systemFeatures.enable_phone_login))
       updateAuthType(systemFeatures.enable_email_password_login ? 'password' : 'code')
       if (isInviteLink) {
         const checkRes = await invitationCheck({
@@ -66,9 +65,15 @@ const NormalForm = () => {
     }
     finally { setIsLoading(false) }
   }, [consoleToken, refreshToken, message, router, invite_token, isInviteLink, systemFeatures])
+
   useEffect(() => {
     init()
   }, [init])
+
+  const handleAuthTypeChange = (type: 'code' | 'password' | 'phone') => {
+    updateAuthType(type)
+  }
+
   if (isLoading || consoleToken) {
     return <div className={
       cn(
@@ -131,9 +136,9 @@ const NormalForm = () => {
             <h2 className="title-4xl-semi-bold text-text-primary">{t('login.join')}{workspaceName}</h2>
             {!systemFeatures.branding.enabled && <p className='body-md-regular mt-2 text-text-tertiary'>{t('login.joinTipStart')}{workspaceName}{t('login.joinTipEnd')}</p>}
           </div>
-          : <div className="mx-auto w-full">
-            <h2 className="title-4xl-semi-bold text-text-primary">{t('login.pageTitle')}</h2>
-            {!systemFeatures.branding.enabled && <p className='body-md-regular mt-2 text-text-tertiary'>{t('login.welcome')}</p>}
+          : <div className="mx-auto mb-8 w-full text-center">
+            <h2 className="title-4xl-semi-bold mb-2 text-gray-800">{t('login.pageTitle')}</h2>
+            <div className="mx-auto h-1 w-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-500"></div>
           </div>}
         <div className="relative">
           <div className="mt-6 flex flex-col gap-3">
@@ -151,62 +156,83 @@ const NormalForm = () => {
               <span className="system-xs-medium-uppercase px-2 text-text-tertiary">{t('login.or')}</span>
             </div>
           </div>}
-          {
-            (systemFeatures.enable_email_code_login || systemFeatures.enable_email_password_login) && <>
-              {systemFeatures.enable_email_code_login && authType === 'code' && <>
-                <MailAndCodeAuth isInvite={isInviteLink} />
-                {systemFeatures.enable_email_password_login && <div className='cursor-pointer py-1 text-center' onClick={() => { updateAuthType('password') }}>
-                  <span className='system-xs-medium text-components-button-secondary-accent-text'>{t('login.usePassword')}</span>
-                </div>}
-              </>}
-              {systemFeatures.enable_email_password_login && authType === 'password' && <>
-                <MailAndPasswordAuth isInvite={isInviteLink} isEmailSetup={systemFeatures.is_email_setup} allowRegistration={systemFeatures.is_allow_register} />
-                {systemFeatures.enable_email_code_login && <div className='cursor-pointer py-1 text-center' onClick={() => { updateAuthType('code') }}>
-                  <span className='system-xs-medium text-components-button-secondary-accent-text'>{t('login.useVerificationCode')}</span>
-                </div>}
-              </>}
-            </>
-          }
-          {allMethodsAreDisabled && <>
-            <div className="rounded-lg bg-gradient-to-r from-workflow-workflow-progress-bg-1 to-workflow-workflow-progress-bg-2 p-4">
-              <div className='shadows-shadow-lg mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-components-card-bg shadow'>
-                <RiDoorLockLine className='h-5 w-5' />
-              </div>
-              <p className='system-sm-medium text-text-primary'>{t('login.noLoginMethod')}</p>
-              <p className='system-xs-regular mt-1 text-text-tertiary'>{t('login.noLoginMethodTip')}</p>
-            </div>
-            <div className="relative my-2 py-2">
-              <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                <div className='h-px w-full bg-gradient-to-r from-background-gradient-mask-transparent via-divider-regular to-background-gradient-mask-transparent'></div>
-              </div>
-            </div>
-          </>}
-          {!systemFeatures.branding.enabled && <>
-            <div className="system-xs-regular mt-2 block w-full text-text-tertiary">
-              {t('login.tosDesc')}
-              &nbsp;
-              <Link
-                className='system-xs-medium text-text-secondary hover:underline'
-                target='_blank' rel='noopener noreferrer'
-                href='https://dify.ai/terms'
-              >{t('login.tos')}</Link>
-              &nbsp;&&nbsp;
-              <Link
-                className='system-xs-medium text-text-secondary hover:underline'
-                target='_blank' rel='noopener noreferrer'
-                href='https://dify.ai/privacy'
-              >{t('login.pp')}</Link>
-            </div>
-            {IS_CE_EDITION && <div className="w-hull system-xs-regular mt-2 block text-text-tertiary">
-              {t('login.goToInit')}
-              &nbsp;
-              <Link
-                className='system-xs-medium text-text-secondary hover:underline'
-                href='/install'
-              >{t('login.setAdminAccount')}</Link>
-            </div>}
-          </>}
 
+          {!allMethodsAreDisabled && (
+            <>
+              {(systemFeatures.enable_email_code_login || systemFeatures.enable_email_password_login || systemFeatures.enable_phone_login) && (
+                <>
+                  {systemFeatures.enable_email_code_login && authType === 'code' && (
+                    <>
+                      <MailAndCodeAuth isInvite={isInviteLink} />
+                      <div className='flex justify-center gap-4 py-1'>
+                        {systemFeatures.enable_email_password_login && (
+                          <div className='cursor-pointer' onClick={() => handleAuthTypeChange('password')}>
+                            <span className='system-xs-medium text-components-button-secondary-accent-text'>{t('login.usePassword')}</span>
+                          </div>
+                        )}
+                        {systemFeatures.enable_phone_login && (
+                          <div className='cursor-pointer' onClick={() => handleAuthTypeChange('phone')}>
+                            <span className='system-xs-medium text-components-button-secondary-accent-text'>{t('login.usePhone')}</span>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                  {systemFeatures.enable_email_password_login && authType === 'password' && (
+                    <>
+                      <MailAndPasswordAuth isInvite={isInviteLink} isEmailSetup={systemFeatures.is_email_setup} allowRegistration={systemFeatures.is_allow_register} />
+                      <div className='flex justify-center gap-4 py-1'>
+                        {systemFeatures.enable_email_code_login && (
+                          <div className='cursor-pointer' onClick={() => handleAuthTypeChange('code')}>
+                            <span className='system-xs-medium text-components-button-secondary-accent-text'>{t('login.useVerificationCode')}</span>
+                          </div>
+                        )}
+                        {systemFeatures.enable_phone_login && (
+                          <div className='cursor-pointer' onClick={() => handleAuthTypeChange('phone')}>
+                            <span className='system-xs-medium text-components-button-secondary-accent-text'>{t('login.usePhone')}</span>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                  {systemFeatures.enable_phone_login && authType === 'phone' && (
+                    <>
+                      <PhoneAndCodeAuth isInvite={isInviteLink} />
+                      <div className='flex justify-center gap-4 py-1'>
+                        {systemFeatures.enable_email_code_login && (
+                          <div className='cursor-pointer' onClick={() => handleAuthTypeChange('code')}>
+                            <span className='system-xs-medium text-components-button-secondary-accent-text'>{t('login.useVerificationCode')}</span>
+                          </div>
+                        )}
+                        {systemFeatures.enable_email_password_login && (
+                          <div className='cursor-pointer' onClick={() => handleAuthTypeChange('password')}>
+                            <span className='system-xs-medium text-components-button-secondary-accent-text'>{t('login.usePassword')}</span>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+            </>
+          )}
+
+          {allMethodsAreDisabled && (
+            <>
+              <div className="rounded-lg bg-gradient-to-r from-workflow-workflow-progress-bg-1 to-workflow-workflow-progress-bg-2 p-4">
+                <div className='shadows-shadow-lg mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-components-card-bg shadow'>
+                  <RiDoorLockLine className='h-5 w-5' />
+                </div>
+                <p className='system-sm-medium text-text-primary'>{t('login.noLoginMethod')}</p>
+                <p className='system-xs-regular mt-1 text-text-tertiary'>{t('login.noLoginMethodTip')}</p>
+              </div>
+              <div className="relative my-2 py-2">
+                <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                  <div className='h-px w-full bg-gradient-to-r from-background-gradient-mask-transparent via-divider-regular to-background-gradient-mask-transparent'></div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </>

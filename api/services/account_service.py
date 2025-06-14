@@ -55,6 +55,7 @@ from tasks.mail_account_deletion_task import send_account_deletion_verification_
 from tasks.mail_email_code_login import send_email_code_login_mail_task
 from tasks.mail_invite_member_task import send_invite_member_mail_task
 from tasks.mail_reset_password_task import send_reset_password_mail_task
+import requests
 
 
 class TokenPair(BaseModel):
@@ -593,6 +594,100 @@ class AccountService:
         redis_client.expire(minute_key, 60)
 
         return False
+
+    @staticmethod
+    def get_social_auth_url(provider: str, language: str) -> str:
+        """获取社交登录 URL"""
+        if provider == 'google':
+            return f'https://accounts.google.com/o/oauth2/v2/auth?client_id={dify_config.GOOGLE_CLIENT_ID}&redirect_uri={dify_config.GOOGLE_REDIRECT_URI}&response_type=code&scope=email profile&state={AccountService.generate_social_auth_state()}'
+        elif provider == 'github':
+            return f'https://github.com/login/oauth/authorize?client_id={dify_config.GITHUB_CLIENT_ID}&redirect_uri={dify_config.GITHUB_REDIRECT_URI}&scope=user:email&state={AccountService.generate_social_auth_state()}'
+        return None
+
+    @staticmethod
+    def generate_social_auth_state() -> str:
+        """生成社交登录的 state 参数"""
+        state = secrets.token_urlsafe(32)
+        redis_client.setex(f'social_auth_state:{state}', 300, '1')  # 5 分钟过期
+        return state
+
+    @staticmethod
+    def verify_social_auth_state(state: str) -> bool:
+        """验证社交登录的 state 参数"""
+        return bool(redis_client.get(f'social_auth_state:{state}'))
+
+    @staticmethod
+    def get_social_account_info(provider: str, code: str) -> dict:
+        """获取社交账号信息"""
+        if provider == 'google':
+            # 获取 access token
+            token_url = 'https://oauth2.googleapis.com/token'
+            token_data = {
+                'client_id': dify_config.GOOGLE_CLIENT_ID,
+                'client_secret': dify_config.GOOGLE_CLIENT_SECRET,
+                'code': code,
+                'redirect_uri': dify_config.GOOGLE_REDIRECT_URI,
+                'grant_type': 'authorization_code',
+            }
+            token_response = requests.post(token_url, data=token_data)
+            if token_response.status_code != 200:
+                return None
+            access_token = token_response.json()['access_token']
+
+            # 获取用户信息
+            user_info_url = 'https://www.googleapis.com/oauth2/v2/userinfo'
+            user_info_response = requests.get(user_info_url, headers={'Authorization': f'Bearer {access_token}'})
+            if user_info_response.status_code != 200:
+                return None
+            user_info = user_info_response.json()
+            return {
+                'id': user_info['id'],
+                'email': user_info['email'],
+                'name': user_info.get('name', ''),
+            }
+        elif provider == 'github':
+            # 获取 access token
+            token_url = 'https://github.com/login/oauth/access_token'
+            token_data = {
+                'client_id': dify_config.GITHUB_CLIENT_ID,
+                'client_secret': dify_config.GITHUB_CLIENT_SECRET,
+                'code': code,
+                'redirect_uri': dify_config.GITHUB_REDIRECT_URI,
+            }
+            token_response = requests.post(token_url, data=token_data, headers={'Accept': 'application/json'})
+            if token_response.status_code != 200:
+                return None
+            access_token = token_response.json()['access_token']
+
+            # 获取用户信息
+            user_info_url = 'https://api.github.com/user'
+            user_info_response = requests.get(user_info_url, headers={'Authorization': f'token {access_token}'})
+            if user_info_response.status_code != 200:
+                return None
+            user_info = user_info_response.json()
+
+            # 获取用户邮箱
+            email_url = 'https://api.github.com/user/emails'
+            email_response = requests.get(email_url, headers={'Authorization': f'token {access_token}'})
+            if email_response.status_code != 200:
+                return None
+            emails = email_response.json()
+            primary_email = next((email['email'] for email in emails if email['primary']), None)
+
+            return {
+                'id': str(user_info['id']),
+                'email': primary_email,
+                'name': user_info.get('name', ''),
+            }
+        return None
+
+    @staticmethod
+    def get_user_through_social_account(provider: str, social_id: str) -> Account:
+        """通过社交账号 ID 查找用户"""
+        return db.session.query(Account).filter(
+            Account.social_provider == provider,
+            Account.social_id == social_id,
+        ).first()
 
 
 class TenantService:

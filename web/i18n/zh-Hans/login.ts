@@ -1,6 +1,6 @@
 const translation = {
-  pageTitle: '嗨，近来可好',
-  welcome: '👋 欢迎来到 Dify, 登录以继续',
+  pageTitle: '登录',
+  welcome: '',
   email: '邮箱',
   emailPlaceholder: '输入邮箱地址',
   password: '密码',
@@ -54,6 +54,9 @@ const translation = {
   confirmPassword: '确认密码',
   confirmPasswordPlaceholder: '确认您的新密码',
   passwordChangedTip: '您的密码已成功更改',
+  phone: '手机号码',
+  phonePlaceholder: '请输入手机号码',
+  getVerificationCode: '获取验证码',
   error: {
     emailEmpty: '邮箱不能为空',
     emailInValid: '请输入有效的邮箱地址',
@@ -62,6 +65,8 @@ const translation = {
     passwordInvalid: '密码必须包含字母和数字，且长度不小于 8 位',
     passwordLengthInValid: '密码必须至少为 8 个字符',
     registrationNotAllowed: '账户不存在，请联系系统管理员注册账户',
+    phoneEmpty: '请输入手机号码',
+    phoneInValid: '请输入正确的手机号码',
   },
   license: {
     tip: '启动 Dify 社区版之前，请阅读 GitHub 上的',
@@ -90,6 +95,8 @@ const translation = {
     useAnotherMethod: '使用其他方式登录',
     emptyCode: '验证码不能为空',
     invalidCode: '验证码无效',
+    checkYourPhone: '验证您的手机号码',
+    phoneTips: '验证码已经发送到您的手机 <strong>{{phone}}</strong>',
   },
   resetPassword: '重置密码',
   resetPasswordDesc: '请输入您的电子邮件地址以重置密码。我们将向您发送一封电子邮件。',
@@ -110,6 +117,7 @@ const translation = {
     noLoginMethodTip: '请联系系统管理员添加身份认证方式',
     disabled: 'Web 应用身份认证已禁用，请联系系统管理员启用。您也可以尝试直接使用应用。',
   },
+  usePhone: '使用手机号码登录',
 }
 
 export default translation

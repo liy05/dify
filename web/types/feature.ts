@@ -27,6 +27,7 @@ export type SystemFeatures = {
   enable_email_code_login: boolean
   enable_email_password_login: boolean
   enable_social_oauth_login: boolean
+  enable_phone_login: boolean
   is_allow_create_workspace: boolean
   is_allow_register: boolean
   is_email_setup: boolean
@@ -46,6 +47,7 @@ export type SystemFeatures = {
     }
     allow_email_code_login: boolean
     allow_email_password_login: boolean
+    allow_phone_login: boolean
   }
 }
 
@@ -58,6 +60,7 @@ export const defaultSystemFeatures: SystemFeatures = {
   enable_email_code_login: false,
   enable_email_password_login: false,
   enable_social_oauth_login: false,
+  enable_phone_login: false,
   is_allow_create_workspace: false,
   is_allow_register: false,
   is_email_setup: false,
@@ -80,5 +83,6 @@ export const defaultSystemFeatures: SystemFeatures = {
     },
     allow_email_code_login: false,
     allow_email_password_login: false,
+    allow_phone_login: false,
   },
 }

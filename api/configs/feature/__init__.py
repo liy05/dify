@@ -843,6 +843,10 @@ class LoginConfig(BaseSettings):
         description="whether to enable github/google oauth login",
         default=False,
     )
+    ENABLE_PHONE_LOGIN: bool = Field(
+        description="whether to enable phone number login",
+        default=False,
+    )
     EMAIL_CODE_LOGIN_TOKEN_EXPIRY_MINUTES: PositiveInt = Field(
         description="expiry time in minutes for email code login token",
         default=5,
@@ -854,6 +858,28 @@ class LoginConfig(BaseSettings):
     ALLOW_CREATE_WORKSPACE: bool = Field(
         description="whether to enable create workspace",
         default=False,
+    )
+    
+    # Aliyun SMS configuration for phone login
+    ALIYUN_ACCESS_KEY_ID: Optional[str] = Field(
+        description="Aliyun Access Key ID for SMS service",
+        default=None,
+    )
+    ALIYUN_ACCESS_KEY_SECRET: Optional[str] = Field(
+        description="Aliyun Access Key Secret for SMS service",
+        default=None,
+    )
+    ALIYUN_SMS_SIGN_NAME: Optional[str] = Field(
+        description="Aliyun SMS signature name",
+        default=None,
+    )
+    ALIYUN_SMS_TEMPLATE_CODE: Optional[str] = Field(
+        description="Aliyun SMS template code",
+        default=None,
+    )
+    SMS_CODE_EXPIRE_SECONDS: PositiveInt = Field(
+        description="SMS verification code expiration time in seconds",
+        default=300,
     )
 
 

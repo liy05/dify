@@ -5,6 +5,8 @@ import { RiContractLine, RiDoorLockLine, RiErrorWarningFill } from '@remixicon/r
 import Loading from '@/app/components/base/loading'
 import MailAndCodeAuth from './components/mail-and-code-auth'
 import MailAndPasswordAuth from './components/mail-and-password-auth'
+import PhoneAndCodeAuth from './components/phone-and-code-auth'
+import SocialAuth from './components/social-auth'
 import SSOAuth from './components/sso-auth'
 import cn from '@/utils/classnames'
 import { LicenseStatus } from '@/types/feature'
@@ -16,14 +18,18 @@ const NormalForm = () => {
 
   const [isLoading, setIsLoading] = useState(true)
   const { systemFeatures } = useGlobalPublicStore()
-  const [authType, updateAuthType] = useState<'code' | 'password'>('password')
+  const [authType, updateAuthType] = useState<'code' | 'password' | 'phone'>('password')
   const [showORLine, setShowORLine] = useState(false)
   const [allMethodsAreDisabled, setAllMethodsAreDisabled] = useState(false)
 
+  const handleAuthTypeChange = (type: 'code' | 'password' | 'phone') => {
+    updateAuthType(type)
+  }
+
   const init = useCallback(async () => {
     try {
-      setAllMethodsAreDisabled(!systemFeatures.enable_social_oauth_login && !systemFeatures.enable_email_code_login && !systemFeatures.enable_email_password_login && !systemFeatures.sso_enforced_for_signin)
-      setShowORLine((systemFeatures.enable_social_oauth_login || systemFeatures.sso_enforced_for_signin) && (systemFeatures.enable_email_code_login || systemFeatures.enable_email_password_login))
+      setAllMethodsAreDisabled(!systemFeatures.enable_social_oauth_login && !systemFeatures.enable_email_code_login && !systemFeatures.enable_email_password_login && !systemFeatures.enable_phone_login && !systemFeatures.sso_enforced_for_signin)
+      setShowORLine((systemFeatures.enable_social_oauth_login || systemFeatures.sso_enforced_for_signin) && (systemFeatures.enable_email_code_login || systemFeatures.enable_email_password_login || systemFeatures.enable_phone_login))
       updateAuthType(systemFeatures.enable_email_password_login ? 'password' : 'code')
     }
     catch (error) {
@@ -32,9 +38,11 @@ const NormalForm = () => {
     }
     finally { setIsLoading(false) }
   }, [systemFeatures])
+
   useEffect(() => {
     init()
   }, [init])
+
   if (isLoading) {
     return <div className={
       cn(
@@ -46,6 +54,7 @@ const NormalForm = () => {
       <Loading type='area' />
     </div>
   }
+
   if (systemFeatures.license?.status === LicenseStatus.LOST) {
     return <div className='mx-auto mt-8 w-full'>
       <div className='relative'>
@@ -60,6 +69,7 @@ const NormalForm = () => {
       </div>
     </div>
   }
+
   if (systemFeatures.license?.status === LicenseStatus.EXPIRED) {
     return <div className='mx-auto mt-8 w-full'>
       <div className='relative'>
@@ -74,6 +84,7 @@ const NormalForm = () => {
       </div>
     </div>
   }
+
   if (systemFeatures.license?.status === LicenseStatus.INACTIVE) {
     return <div className='mx-auto mt-8 w-full'>
       <div className='relative'>
@@ -98,6 +109,7 @@ const NormalForm = () => {
         </div>
         <div className="relative">
           <div className="mt-6 flex flex-col gap-3">
+            {systemFeatures.enable_social_oauth_login && <SocialAuth />}
             {systemFeatures.sso_enforced_for_signin && <div className='w-full'>
               <SSOAuth protocol={systemFeatures.sso_enforced_for_signin_protocol} />
             </div>}
@@ -111,22 +123,66 @@ const NormalForm = () => {
               <span className="system-xs-medium-uppercase px-2 text-text-tertiary">{t('login.or')}</span>
             </div>
           </div>}
-          {
-            (systemFeatures.enable_email_code_login || systemFeatures.enable_email_password_login) && <>
-              {systemFeatures.enable_email_code_login && authType === 'code' && <>
-                <MailAndCodeAuth />
-                {systemFeatures.enable_email_password_login && <div className='cursor-pointer py-1 text-center' onClick={() => { updateAuthType('password') }}>
-                  <span className='system-xs-medium text-components-button-secondary-accent-text'>{t('login.usePassword')}</span>
-                </div>}
-              </>}
-              {systemFeatures.enable_email_password_login && authType === 'password' && <>
-                <MailAndPasswordAuth isEmailSetup={systemFeatures.is_email_setup} />
-                {systemFeatures.enable_email_code_login && <div className='cursor-pointer py-1 text-center' onClick={() => { updateAuthType('code') }}>
-                  <span className='system-xs-medium text-components-button-secondary-accent-text'>{t('login.useVerificationCode')}</span>
-                </div>}
-              </>}
+
+          {!allMethodsAreDisabled && (
+            <>
+              {(systemFeatures.enable_email_code_login || systemFeatures.enable_email_password_login || systemFeatures.enable_phone_login) && (
+                <>
+                  {systemFeatures.enable_email_code_login && authType === 'code' && (
+                    <>
+                      <MailAndCodeAuth />
+                      <div className='flex justify-center gap-4 py-1'>
+                        {systemFeatures.enable_email_password_login && (
+                          <div className='cursor-pointer' onClick={() => handleAuthTypeChange('password')}>
+                            <span className='system-xs-medium text-components-button-secondary-accent-text'>{t('login.usePassword')}</span>
+                          </div>
+                        )}
+                        {systemFeatures.enable_phone_login && (
+                          <div className='cursor-pointer' onClick={() => handleAuthTypeChange('phone')}>
+                            <span className='system-xs-medium text-components-button-secondary-accent-text'>{t('login.usePhone')}</span>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                  {systemFeatures.enable_email_password_login && authType === 'password' && (
+                    <>
+                      <MailAndPasswordAuth isEmailSetup={systemFeatures.is_email_setup} />
+                      <div className='flex justify-center gap-4 py-1'>
+                        {systemFeatures.enable_email_code_login && (
+                          <div className='cursor-pointer' onClick={() => handleAuthTypeChange('code')}>
+                            <span className='system-xs-medium text-components-button-secondary-accent-text'>{t('login.useVerificationCode')}</span>
+                          </div>
+                        )}
+                        {systemFeatures.enable_phone_login && (
+                          <div className='cursor-pointer' onClick={() => handleAuthTypeChange('phone')}>
+                            <span className='system-xs-medium text-components-button-secondary-accent-text'>{t('login.usePhone')}</span>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                  {systemFeatures.enable_phone_login && authType === 'phone' && (
+                    <>
+                      <PhoneAndCodeAuth />
+                      <div className='flex justify-center gap-4 py-1'>
+                        {systemFeatures.enable_email_code_login && (
+                          <div className='cursor-pointer' onClick={() => handleAuthTypeChange('code')}>
+                            <span className='system-xs-medium text-components-button-secondary-accent-text'>{t('login.useVerificationCode')}</span>
+                          </div>
+                        )}
+                        {systemFeatures.enable_email_password_login && (
+                          <div className='cursor-pointer' onClick={() => handleAuthTypeChange('password')}>
+                            <span className='system-xs-medium text-components-button-secondary-accent-text'>{t('login.usePassword')}</span>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
             </>
-          }
+          )}
           {allMethodsAreDisabled && <>
             <div className="rounded-lg bg-gradient-to-r from-workflow-workflow-progress-bg-1 to-workflow-workflow-progress-bg-2 p-4">
               <div className='shadows-shadow-lg mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-components-card-bg shadow'>

@@ -1,18 +1,15 @@
-import logging
 import re
-import secrets
-from datetime import UTC, datetime
-
-from flask import request
-from flask_restful import Resource, reqparse
-from werkzeug.exceptions import Unauthorized
-
-from controllers.console import api
-from extensions.ext_database import db
-from extensions.ext_redis import redis_client
-from libs.login import login_required
-from models.account import Account, AccountStatus
+import logging
+from flask import request, jsonify
+from flask_restful import Resource
+from werkzeug.security import generate_password_hash
+from models.account import Account
 from services.account_service import AccountService
+from services.sms_service import send_sms, verify_code
+from extensions.ext_redis import redis_client
+from extensions.ext_database import db
+
+logger = logging.getLogger(__name__)
 
 
 class PhoneSMSCodeApi(Resource):
@@ -20,47 +17,38 @@ class PhoneSMSCodeApi(Resource):
 
     def post(self):
         """发送手机验证码"""
-        parser = reqparse.RequestParser()
-        parser.add_argument("phone", type=str, required=True, location="json")
-        args = parser.parse_args()
+        data = request.get_json()
+        phone = data.get('phone')
+        language = data.get('language', 'zh-Hans')
 
-        phone = args["phone"]
+        if not phone:
+            return {'result': 'fail', 'message': 'Phone number is required'}, 400
 
         # 验证手机号格式
         if not self._is_valid_phone(phone):
-            return {"result": "error", "message": "手机号格式不正确"}, 400
+            return {'result': 'fail', 'message': 'Invalid phone number format'}, 400
 
-        try:
-            # 检查发送频率限制
-            rate_limit_key = f"sms_rate_limit:{phone}"
-            if redis_client.get(rate_limit_key):
-                return {"result": "error", "message": "验证码发送过于频繁，请稍后再试"}, 429
+        # 检查发送频率限制
+        rate_limit_key = f'phone_sms_rate_limit:{phone}'
+        if redis_client.get(rate_limit_key):
+            return {'result': 'fail', 'message': '验证码发送太频繁，请60秒后再试'}, 429
 
-            # 生成6位验证码 - 使用 secrets 模块确保加密安全
-            code = "".join([str(secrets.randbelow(10)) for _ in range(6)])
+        # 发送验证码
+        result = send_sms(phone)
+        if not result['success']:
+            return {'result': 'fail', 'message': result['message']}, 500
 
-            # 存储验证码（5分钟有效期）
-            code_key = f"sms_code:{phone}"
-            redis_client.setex(code_key, 300, code)  # 5分钟过期
+        # 生成验证token（用于验证码验证时的安全校验）
+        import uuid
+        verification_token = str(uuid.uuid4())
+        
+        # 将token存储到Redis，与手机号关联，设置5分钟过期
+        redis_client.setex(f'phone_verification_token:{phone}', 300, verification_token)
 
-            # 设置发送频率限制（60秒）
-            redis_client.setex(rate_limit_key, 60, "1")
+        # 设置发送频率限制（60秒）
+        redis_client.setex(rate_limit_key, 60, "1")
 
-            # TODO: 这里应该调用实际的短信服务发送验证码
-            # 目前为了演示，我们只是记录日志
-            logging.info(f"SMS code for {phone}: {code}")
-
-            # 在开发环境下，可以返回验证码用于测试
-            # 生产环境应该移除这部分
-            response_data = {"result": "success", "message": "验证码已发送"}
-            if request.environ.get("FLASK_ENV") == "development":
-                response_data["code"] = code  # 仅开发环境返回
-
-            return response_data
-
-        except Exception as e:
-            logging.exception("SMS code send failed")
-            return {"result": "error", "message": "验证码发送失败"}, 500
+        return {'result': 'success', 'data': verification_token}, 200
 
     def _is_valid_phone(self, phone: str) -> bool:
         """验证手机号格式"""
@@ -73,146 +61,73 @@ class PhoneSMSAuthApi(Resource):
     """手机验证码登录API"""
 
     def post(self):
-        """手机验证码登录"""
-        parser = reqparse.RequestParser()
-        parser.add_argument("phone", type=str, required=True, location="json")
-        parser.add_argument("code", type=str, required=True, location="json")
-        parser.add_argument("name", type=str, location="json")
-        parser.add_argument("email", type=str, location="json")
-        args = parser.parse_args()
+        """使用手机验证码登录"""
+        data = request.get_json()
+        phone = data.get('phone')
+        code = data.get('code')
+        token = data.get('token')  # 用于邀请链接的场景
 
-        phone = args["phone"]
-        code = args["code"]
+        if not all([phone, code]):
+            return {'result': 'fail', 'message': 'Phone number and verification code are required'}, 400
 
-        try:
-            # 验证验证码
-            code_key = f"sms_code:{phone}"
-            stored_code = redis_client.get(code_key)
+        # 验证手机号格式
+        if not PhoneSMSCodeApi()._is_valid_phone(phone):
+            return {'result': 'fail', 'message': 'Invalid phone number format'}, 400
 
-            if not stored_code or stored_code.decode() != code:
-                return {"result": "error", "message": "验证码错误或已过期"}, 400
+        # 验证token的有效性
+        stored_token = redis_client.get(f'phone_verification_token:{phone}')
+        if not stored_token or stored_token.decode('utf-8') != token:
+            return {'result': 'fail', 'message': 'Invalid or expired verification token'}, 400
 
-            # 删除已使用的验证码
-            redis_client.delete(code_key)
+        # 验证验证码
+        if not verify_code(phone, code):
+            return {'result': 'fail', 'message': 'Invalid or expired verification code'}, 400
+        
+        # 验证成功后删除token，防止重复使用
+        redis_client.delete(f'phone_verification_token:{phone}')
 
-            # 查找用户
-            account = db.session.query(Account).filter(Account.phone == phone).first()
+        # 查找或创建用户
+        account = db.session.query(Account).filter_by(phone=phone).first()
+        if not account:
+            # 如果是邀请链接场景，使用邀请token创建账号
+            if token:
+                account = AccountService.create_account_by_invite_token(token)
+                if not account:
+                    return {'result': 'fail', 'message': 'Invalid invite token'}, 400
+                account.phone = phone
+            else:
+                # 创建新账号和工作空间
+                try:
+                    account = AccountService.create_account_and_tenant(
+                        email=f'{phone}@phone.local',  # 临时邮箱
+                        name=f'User_{phone[-4:]}',
+                        interface_language='zh-Hans'
+                    )
+                    account.phone = phone
+                    db.session.commit()
+                except Exception as e:
+                    logger.error(f"创建账号和工作空间失败: {e}")
+                    return {'result': 'fail', 'message': 'Failed to create account'}, 500
 
-            if not account:
-                # 如果用户不存在，需要提供姓名和邮箱来创建新用户
-                if not args.get("name") or not args.get("email"):
-                    return {
-                        "result": "user_not_found",
-                        "message": "用户不存在，需要提供姓名和邮箱来创建账户",
-                    }, 404
+        # 检查工作空间（参考邮箱登录逻辑）
+        from services.account_service import TenantService
+        from services.feature_service import FeatureService
+        
+        tenants = TenantService.get_join_tenants(account)
+        if len(tenants) == 0:
+            system_features = FeatureService.get_system_features()
+            if system_features.is_allow_create_workspace and not system_features.license.workspaces.is_available():
+                return {'result': 'fail', 'message': 'Workspaces limit exceeded'}, 400
+            else:
+                return {
+                    'result': 'fail',
+                    'message': 'workspace not found, please contact system admin to invite you to join in a workspace',
+                }, 400
 
-                # 检查邮箱是否已被使用
-                existing_account = db.session.query(Account).filter(Account.email == args["email"]).first()
-                if existing_account:
-                    return {"result": "error", "message": "邮箱已被使用"}, 400
+        # 登录用户
+        ip_address = request.remote_addr
+        token_pair = AccountService.login(account=account, ip_address=ip_address)
 
-                # 创建新用户
-                account = AccountService.create_account(
-                    email=args["email"],
-                    name=args["name"],
-                    interface_language="zh-Hans",
-                    phone=phone,
-                )
-                account.status = AccountStatus.ACTIVE.value
-                account.initialized_at = datetime.now(UTC).replace(tzinfo=None)
-                db.session.commit()
-
-            # 检查账户状态
-            if account.status == AccountStatus.BANNED.value:
-                raise Unauthorized("账户已被禁用")
-
-            # 更新登录信息
-            ip_address = request.remote_addr
-            token_pair = AccountService.login(account=account, ip_address=ip_address)
-
-            return {
-                "result": "success",
-                "data": {
-                    "access_token": token_pair.access_token,
-                    "refresh_token": token_pair.refresh_token,
-                    "account": {
-                        "id": account.id,
-                        "name": account.name,
-                        "email": account.email,
-                        "avatar": account.avatar,
-                        "phone": account.phone,
-                    },
-                },
-            }
-
-        except Exception as e:
-            logging.exception("Phone SMS login failed")
-            return {"result": "error", "message": str(e)}, 500
-
-
-class PhoneBindApi(Resource):
-    """手机号绑定API"""
-
-    @login_required
-    def post(self):
-        """绑定手机号"""
-        parser = reqparse.RequestParser()
-        parser.add_argument("phone", type=str, required=True, location="json")
-        parser.add_argument("code", type=str, required=True, location="json")
-        args = parser.parse_args()
-
-        from libs.login import current_user
-
-        phone = args["phone"]
-        code = args["code"]
-
-        try:
-            # 验证验证码
-            code_key = f"sms_code:{phone}"
-            stored_code = redis_client.get(code_key)
-
-            if not stored_code or stored_code.decode() != code:
-                return {"result": "error", "message": "验证码错误或已过期"}, 400
-
-            # 删除已使用的验证码
-            redis_client.delete(code_key)
-
-            # 检查手机号是否已被其他用户使用
-            existing_account = (
-                db.session.query(Account).filter(Account.phone == phone, Account.id != current_user.id).first()
-            )
-            if existing_account:
-                return {"result": "error", "message": "该手机号已被其他用户绑定"}, 400
-
-            # 绑定手机号
-            current_user.phone = phone
-            current_user.updated_at = datetime.now(UTC).replace(tzinfo=None)
-            db.session.commit()
-
-            return {"result": "success", "message": "手机号绑定成功"}
-
-        except Exception as e:
-            logging.exception("Phone bind failed")
-            return {"result": "error", "message": str(e)}, 500
-
-    @login_required
-    def delete(self):
-        """解绑手机号"""
-        from libs.login import current_user
-
-        try:
-            current_user.phone = None
-            current_user.updated_at = datetime.now(UTC).replace(tzinfo=None)
-            db.session.commit()
-
-            return {"result": "success", "message": "手机号解绑成功"}
-
-        except Exception as e:
-            logging.exception("Phone unbind failed")
-            return {"result": "error", "message": str(e)}, 500
-
-
-# 注册API路由
-api.add_resource(PhoneSMSCodeApi, "/auth/phone/send-code")
-api.add_resource(PhoneSMSAuthApi, "/auth/phone/login")
-api.add_resource(PhoneBindApi, "/auth/phone/bind") 
+        response_data = {"result": "success", "data": token_pair.model_dump()}
+        logger.info(f"手机登录成功，返回数据: {response_data}")
+        return response_data 

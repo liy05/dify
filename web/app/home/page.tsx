@@ -3,6 +3,7 @@ import Link from 'next/link'
 import useSWR from 'swr'
 import { RiRobot2Line } from '@remixicon/react'
 import Loading from '@/app/components/base/loading'
+import AppIcon from '@/app/components/base/app-icon'
 import { type AgentCategory, fetchAgentCategories } from '@/service/agent-config'
 import useDocumentTitle from '@/hooks/use-document-title'
 
@@ -61,22 +62,25 @@ const HomePage = () => {
               <div key={category.id} className="mb-12">
                 {/* 分类标题 */}
                 <div className="mb-6">
-                  <div className="mb-2 flex items-center">
-                    <div className="mr-3 flex h-6 w-6 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-purple-600">
-                      <span className="text-sm font-bold text-white">🎯</span>
+                  <div className="mb-2 flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="mr-3 flex h-5 w-5 items-center justify-center rounded-md bg-gradient-to-br from-blue-500 to-purple-600">
+                        <span className="text-xs font-bold text-white">🎯</span>
+                      </div>
+                      <h2 className="text-lg font-semibold text-gray-900">
+                        {category.name}
+                      </h2>
+                      {category.description && (
+                        <span className="ml-3 text-sm font-light text-gray-400">
+                          {category.description}
+                        </span>
+                      )}
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900">
-                      {category.name}
-                    </h2>
-
                   </div>
-                  {category.description && (
-                    <p className="ml-9 text-gray-600">{category.description}</p>
-                  )}
                 </div>
 
                 {/* 工具卡片网格 */}
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
                   {category.apps.map(agent => (
                     <Link
                       key={agent.id}
@@ -85,16 +89,23 @@ const HomePage = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      <div className="rounded-xl border border-gray-100 bg-white p-3 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-md">
-                        <div className="flex items-center space-x-3">
+                      <div className="rounded-lg border border-gray-100 bg-white p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
+                        <div className="flex items-center space-x-2.5">
                           {/* 工具图标 */}
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 text-base text-white shadow-sm transition-transform duration-300 group-hover:scale-110">
-                            {agent.icon || '🤖'}
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center">
+                            <AppIcon
+                              size="small"
+                              iconType={agent.icon_type as 'image' | 'emoji' | null}
+                              icon={agent.icon}
+                              background={agent.icon_background}
+                              imageUrl={agent.icon_url}
+                              className="transition-transform duration-200 group-hover:scale-105"
+                            />
                           </div>
 
                           {/* 工具信息 */}
                           <div className="min-w-0 flex-1">
-                            <h3 className="mb-1 line-clamp-1 text-sm font-semibold leading-tight text-gray-900 transition-colors group-hover:text-blue-600">
+                            <h3 className="mb-0.5 line-clamp-1 text-sm font-medium leading-tight text-gray-900 transition-colors group-hover:text-blue-600">
                               {agent.name}
                             </h3>
 

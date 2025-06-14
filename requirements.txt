@@ -1,0 +1,2 @@
+aliyun-python-sdk-core>=2.13.36
+aliyun-python-sdk-dysmsapi>=2.1.2 

@@ -105,11 +105,11 @@ export default function MailAndPasswordAuth({ isInvite, isEmailSetup, allowRegis
   }
 
   return <form onSubmit={noop}>
-    <div className='mb-3'>
-      <label htmlFor="email" className="system-md-semibold my-2 text-text-secondary">
+    <div className='mb-6'>
+      <label htmlFor="email" className="system-md-semibold my-2 text-gray-700">
         {t('login.email')}
       </label>
-      <div className="mt-1">
+      <div className="mt-2">
         <Input
           value={email}
           onChange={e => setEmail(e.target.value)}
@@ -119,23 +119,24 @@ export default function MailAndPasswordAuth({ isInvite, isEmailSetup, allowRegis
           autoComplete="email"
           placeholder={t('login.emailPlaceholder') || ''}
           tabIndex={1}
+          className="w-full rounded-xl border border-gray-200 bg-white/70 px-4 py-3 backdrop-blur-sm transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-blue-500"
         />
       </div>
     </div>
 
-    <div className='mb-3'>
+    <div className='mb-6'>
       <label htmlFor="password" className="my-2 flex items-center justify-between">
-        <span className='system-md-semibold text-text-secondary'>{t('login.password')}</span>
+        <span className='system-md-semibold text-gray-700'>{t('login.password')}</span>
         <Link
           href={`/reset-password?${searchParams.toString()}`}
-          className={`system-xs-regular ${isEmailSetup ? 'text-components-button-secondary-accent-text' : 'pointer-events-none text-components-button-secondary-accent-text-disabled'}`}
+          className={`system-xs-regular ${isEmailSetup ? 'text-blue-600 hover:text-blue-800' : 'pointer-events-none text-gray-400'} transition-colors duration-200`}
           tabIndex={isEmailSetup ? 0 : -1}
           aria-disabled={!isEmailSetup}
         >
           {t('login.forget')}
         </Link>
       </label>
-      <div className="relative mt-1">
+      <div className="relative mt-2">
         <Input
           id="password"
           value={password}
@@ -148,14 +149,16 @@ export default function MailAndPasswordAuth({ isInvite, isEmailSetup, allowRegis
           autoComplete="current-password"
           placeholder={t('login.passwordPlaceholder') || ''}
           tabIndex={2}
+          className="w-full rounded-xl border border-gray-200 bg-white/70 px-4 py-3 pr-12 backdrop-blur-sm transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-blue-500"
         />
-        <div className="absolute inset-y-0 right-0 flex items-center">
+        <div className="absolute inset-y-0 right-0 flex items-center pr-3">
           <Button
             type="button"
             variant='ghost'
             onClick={() => setShowPassword(!showPassword)}
+            className="text-gray-500 transition-colors duration-200 hover:text-gray-700"
           >
-            {showPassword ? '👀' : '😝'}
+            {showPassword ? '👁️' : '👁️‍🗨️'}
           </Button>
         </div>
       </div>
@@ -167,7 +170,7 @@ export default function MailAndPasswordAuth({ isInvite, isEmailSetup, allowRegis
         variant='primary'
         onClick={handleEmailPasswordLogin}
         disabled={isLoading || !email || !password}
-        className="w-full"
+        className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 py-3 font-semibold text-white shadow-lg transition-all duration-200 hover:scale-[1.02] hover:from-blue-700 hover:to-purple-700 hover:shadow-xl disabled:transform-none disabled:cursor-not-allowed disabled:opacity-50"
       >{t('login.signBtn')}</Button>
     </div>
   </form>

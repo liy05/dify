@@ -79,6 +79,10 @@ from .auth import (
     wechat_work,
 )
 
+# Register phone SMS APIs
+api.add_resource(phone_sms.PhoneSMSCodeApi, "/phone/send-verification-code")
+api.add_resource(phone_sms.PhoneSMSAuthApi, "/phone/login")
+
 # Import billing controllers
 from .billing import billing, compliance
 
@@ -192,3 +196,5 @@ from .workspace import (
     user_management,
     workspace,
 )
+
+# Auth APIs are registered in their respective modules

@@ -257,3 +257,54 @@ To protect your privacy, please avoid posting security issues on GitHub. Instead
 ## License
 
 This repository is available under the [Dify Open Source License](LICENSE), which is essentially Apache 2.0 with a few additional restrictions.
+
+## 手机验证码登录
+
+系统支持使用手机验证码进行登录。该功能使用阿里云短信服务发送验证码。
+
+### 配置要求
+
+1. 阿里云账号和短信服务
+   - 开通阿里云短信服务
+   - 创建短信签名
+   - 创建短信模板（验证码模板）
+
+2. 环境变量配置
+   ```bash
+   # 阿里云短信服务配置
+   ALIYUN_ACCESS_KEY_ID=your_access_key_id
+   ALIYUN_ACCESS_KEY_SECRET=your_access_key_secret
+   ALIYUN_SMS_SIGN_NAME=your_sign_name
+   ALIYUN_SMS_TEMPLATE_CODE=your_template_code
+   SMS_CODE_EXPIRE_SECONDS=300  # 验证码有效期（秒）
+   ```
+
+### API 接口
+
+1. 发送验证码
+   ```
+   POST /auth/phone/send-code
+   Content-Type: application/json
+   
+   {
+     "phone": "13800138000"
+   }
+   ```
+
+2. 验证码登录
+   ```
+   POST /auth/phone/login
+   Content-Type: application/json
+   
+   {
+     "phone": "13800138000",
+     "code": "123456"
+   }
+   ```
+
+### 注意事项
+
+1. 验证码有效期为5分钟
+2. 同一手机号60秒内只能发送一次验证码
+3. 验证码使用后立即失效
+4. 新用户首次登录将自动创建账号

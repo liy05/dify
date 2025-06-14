@@ -43,7 +43,7 @@ const DifyLogo: FC<DifyLogoProps> = ({
         viewBox="0 0 32 32"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className={classNames('mr-2', className)}
+        className={classNames('mr-3', className)}
       >
         <rect
           width="32"
@@ -61,7 +61,7 @@ const DifyLogo: FC<DifyLogoProps> = ({
         />
       </svg>
       <span className={classNames(
-        'font-bold',
+        'font-bold whitespace-nowrap',
         size === 'large' ? 'text-xl' : size === 'medium' ? 'text-lg' : 'text-base',
         themedStyle === 'monochromeWhite' ? 'text-white' : 'text-gray-900',
       )}>
