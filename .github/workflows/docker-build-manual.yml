@@ -30,23 +30,26 @@ jobs:
     strategy:
       matrix:
         include:
-          - ${{ github.event.inputs.service == 'api' || github.event.inputs.service == 'all' && github.event.inputs.platform == 'amd64' || github.event.inputs.platform == 'all' }}:
-              service_name: "api-amd64"
-              platform: linux/amd64
-              context: "api"
-          - ${{ github.event.inputs.service == 'api' || github.event.inputs.service == 'all' && github.event.inputs.platform == 'arm64' || github.event.inputs.platform == 'all' }}:
-              service_name: "api-arm64"
-              platform: linux/arm64
-              context: "api"
-          - ${{ github.event.inputs.service == 'web' || github.event.inputs.service == 'all' && github.event.inputs.platform == 'amd64' || github.event.inputs.platform == 'all' }}:
-              service_name: "web-amd64"
-              platform: linux/amd64
-              context: "web"
-          - ${{ github.event.inputs.service == 'web' || github.event.inputs.service == 'all' && github.event.inputs.platform == 'arm64' || github.event.inputs.platform == 'all' }}:
-              service_name: "web-arm64"
-              platform: linux/arm64
-              context: "web"
+          - service_name: "api-amd64"
+            platform: linux/amd64
+            context: "api"
+            file: "api/Dockerfile"
+          - service_name: "api-arm64"
+            platform: linux/arm64
+            context: "api"
+            file: "api/Dockerfile"
+          - service_name: "web-amd64"
+            platform: linux/amd64
+            context: "web"
+            file: "web/Dockerfile"
+          - service_name: "web-arm64"
+            platform: linux/arm64
+            context: "web"
+            file: "web/Dockerfile"
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -57,8 +60,8 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: false
-          context: "{{defaultContext}}:${{ matrix.context }}"
-          file: "${{ matrix.context }}/Dockerfile"
+          context: .
+          file: ${{ matrix.file }}
           platforms: ${{ matrix.platform }}
           cache-from: type=gha
           cache-to: type=gha,mode=max 
