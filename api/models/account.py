@@ -1,7 +1,6 @@
 import enum
 import json
 from typing import Optional, cast
-from datetime import datetime
 
 from flask_login import UserMixin  # type: ignore
 from sqlalchemy import func

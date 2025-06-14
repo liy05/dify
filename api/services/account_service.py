@@ -7,6 +7,7 @@ from datetime import UTC, datetime, timedelta
 from hashlib import sha256
 from typing import Any, Optional, cast
 
+import requests
 from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -55,7 +56,6 @@ from tasks.mail_account_deletion_task import send_account_deletion_verification_
 from tasks.mail_email_code_login import send_email_code_login_mail_task
 from tasks.mail_invite_member_task import send_invite_member_mail_task
 from tasks.mail_reset_password_task import send_reset_password_mail_task
-import requests
 
 
 class TokenPair(BaseModel):
@@ -596,13 +596,31 @@ class AccountService:
         return False
 
     @staticmethod
-    def get_social_auth_url(provider: str, language: str) -> str:
-        """获取社交登录 URL"""
-        if provider == 'google':
-            return f'https://accounts.google.com/o/oauth2/v2/auth?client_id={dify_config.GOOGLE_CLIENT_ID}&redirect_uri={dify_config.GOOGLE_REDIRECT_URI}&response_type=code&scope=email profile&state={AccountService.generate_social_auth_state()}'
-        elif provider == 'github':
-            return f'https://github.com/login/oauth/authorize?client_id={dify_config.GITHUB_CLIENT_ID}&redirect_uri={dify_config.GITHUB_REDIRECT_URI}&scope=user:email&state={AccountService.generate_social_auth_state()}'
-        return None
+    def get_google_auth_url() -> str:
+        """获取Google OAuth认证URL"""
+        base_url = 'https://accounts.google.com/o/oauth2/v2/auth'
+        redirect_uri = dify_config.GOOGLE_REDIRECT_URI
+        scope = 'email profile'
+        state = AccountService.generate_social_auth_state()
+        
+        return (f'{base_url}?client_id={dify_config.GOOGLE_CLIENT_ID}'
+                f'&redirect_uri={redirect_uri}'
+                f'&response_type=code'
+                f'&scope={scope}'
+                f'&state={state}')
+
+    @staticmethod
+    def get_github_auth_url() -> str:
+        """获取GitHub OAuth认证URL"""
+        base_url = 'https://github.com/login/oauth/authorize'
+        redirect_uri = dify_config.GITHUB_REDIRECT_URI
+        scope = 'user:email'
+        state = AccountService.generate_social_auth_state()
+        
+        return (f'{base_url}?client_id={dify_config.GITHUB_CLIENT_ID}'
+                f'&redirect_uri={redirect_uri}'
+                f'&scope={scope}'
+                f'&state={state}')
 
     @staticmethod
     def generate_social_auth_state() -> str:

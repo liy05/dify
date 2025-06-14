@@ -1,15 +1,12 @@
 import json
 import logging
-import random
-import time
-from typing import Dict, Optional, Tuple
-from datetime import datetime, timedelta
+import secrets
 import uuid
 
 try:
+    from aliyunsdkcore.acs_exception.exceptions import ClientException, ServerException
     from aliyunsdkcore.client import AcsClient
     from aliyunsdkcore.request import CommonRequest
-    from aliyunsdkcore.acs_exception.exceptions import ClientException, ServerException
     ALIYUN_SMS_AVAILABLE = True
 except ImportError:
     ALIYUN_SMS_AVAILABLE = False
@@ -20,15 +17,15 @@ from extensions.ext_redis import redis_client
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
-def generate_verification_code(length=6):
+def generate_verification_code(length: int = 6) -> str:
     """
     生成指定长度的随机验证码
-    :param length: 验证码长度，默认6位
+    :param length: 验证码长度
     :return: 随机验证码字符串
     """
-    return ''.join(random.choices('0123456789', k=length))
+    return ''.join(secrets.choice('0123456789') for _ in range(length))
 
-def send_sms(phone_number: str) -> Dict:
+def send_sms(phone_number: str) -> dict:
     """
     发送短信验证码
     :param phone_number: 接收短信的手机号
@@ -120,27 +117,22 @@ def send_sms(phone_number: str) -> Dict:
         return result
         
     except ClientException as e:
-        log.error(f"客户端错误 - {e.get_error_code()}: {e.get_error_msg()}")
+        log.exception(f"客户端错误 - {e.get_error_code()}: {e.get_error_msg()}")
         return {
             'success': False,
-            'message': '客户端错误',
-            'error_code': e.get_error_code(),
-            'error_message': e.get_error_msg()
+            'message': f"客户端错误: {e.get_error_msg()}"
         }
     except ServerException as e:
-        log.error(f"服务器错误 - {e.get_error_code()}: {e.get_error_msg()}")
+        log.exception(f"服务器错误 - {e.get_error_code()}: {e.get_error_msg()}")
         return {
             'success': False,
-            'message': '服务器错误',
-            'error_code': e.get_error_code(),
-            'error_message': e.get_error_msg()
+            'message': f"服务器错误: {e.get_error_msg()}"
         }
     except Exception as e:
-        log.error(f"未知错误 - {str(e)}")
+        log.exception("未知错误")
         return {
             'success': False,
-            'message': '未知错误',
-            'error': str(e)
+            'message': f"未知错误: {str(e)}"
         }
 
 def verify_code(phone_number: str, code: str) -> bool:

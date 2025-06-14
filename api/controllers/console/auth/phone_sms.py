@@ -1,13 +1,14 @@
-import re
 import logging
-from flask import request, jsonify
+import re
+
+from flask import request
 from flask_restful import Resource
-from werkzeug.security import generate_password_hash
+
+from extensions.ext_database import db
+from extensions.ext_redis import redis_client
 from models.account import Account
 from services.account_service import AccountService
 from services.sms_service import send_sms, verify_code
-from extensions.ext_redis import redis_client
-from extensions.ext_database import db
 
 logger = logging.getLogger(__name__)
 
@@ -106,7 +107,7 @@ class PhoneSMSAuthApi(Resource):
                     account.phone = phone
                     db.session.commit()
                 except Exception as e:
-                    logger.error(f"创建账号和工作空间失败: {e}")
+                    logger.exception("创建账号和工作空间失败")
                     return {'result': 'fail', 'message': 'Failed to create account'}, 500
 
         # 检查工作空间（参考邮箱登录逻辑）
