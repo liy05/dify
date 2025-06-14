@@ -496,6 +496,16 @@ const UserManagementPage: React.FC = () => {
     return statusMap[status] || status
   }
 
+  const getStatusClass = (status: string) => {
+    if (status === 'active')
+      return 'bg-util-colors-green-green-50 text-util-colors-green-green-600'
+
+    if (status === 'pending')
+      return 'bg-util-colors-yellow-yellow-50 text-util-colors-yellow-yellow-600'
+
+    return 'bg-util-colors-red-red-50 text-util-colors-red-red-600'
+  }
+
   if (error) {
     return (
       <div className="flex h-0 shrink-0 grow flex-col overflow-y-auto bg-background-body">
@@ -567,14 +577,6 @@ const UserManagementPage: React.FC = () => {
           </thead>
           <tbody className="divide-y divide-divider-subtle">
             {(data?.users || []).map((user) => {
-              let statusClass = ''
-              if (user.status === 'active')
-                statusClass = 'bg-util-colors-green-green-50 text-util-colors-green-green-600'
-               else if (user.status === 'pending')
-                statusClass = 'bg-util-colors-yellow-yellow-50 text-util-colors-yellow-yellow-600'
-               else
-                statusClass = 'bg-util-colors-red-red-50 text-util-colors-red-red-600'
-
               return (
                 <tr key={user.id} className="hover:bg-background-default-wash">
                   <td className="px-4 py-3">
@@ -605,7 +607,7 @@ const UserManagementPage: React.FC = () => {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`system-xs-medium inline-flex items-center rounded-md px-2 py-1 ${statusClass}`}>
+                    <span className={`system-xs-medium inline-flex items-center rounded-md px-2 py-1 ${getStatusClass(user.status)}`}>
                       {getStatusText(user.status)}
                     </span>
                   </td>

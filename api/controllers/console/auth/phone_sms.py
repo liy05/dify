@@ -1,6 +1,6 @@
 import logging
-import random
 import re
+import secrets
 from datetime import UTC, datetime
 
 from flask import request
@@ -36,8 +36,8 @@ class PhoneSMSCodeApi(Resource):
             if redis_client.get(rate_limit_key):
                 return {"result": "error", "message": "验证码发送过于频繁，请稍后再试"}, 429
 
-            # 生成6位验证码
-            code = "".join([str(random.randint(0, 9)) for _ in range(6)])
+            # 生成6位验证码 - 使用 secrets 模块确保加密安全
+            code = "".join([str(secrets.randbelow(10)) for _ in range(6)])
 
             # 存储验证码（5分钟有效期）
             code_key = f"sms_code:{phone}"
