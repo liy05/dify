@@ -1,7 +1,6 @@
 import base64
 import json
 import logging
-import random
 import secrets
 import uuid
 from datetime import UTC, datetime, timedelta
@@ -269,7 +268,7 @@ class AccountService:
 
     @staticmethod
     def generate_account_deletion_verification_code(account: Account) -> tuple[str, str]:
-        code = "".join([str(random.randint(0, 9)) for _ in range(6)])
+        code = "".join([str(secrets.randbelow(exclusive_upper_bound=10)) for _ in range(6)])
         token = TokenManager.generate_token(
             account=account, token_type="account_deletion", additional_data={"code": code}
         )
@@ -437,7 +436,7 @@ class AccountService:
         additional_data: dict[str, Any] = {},
     ):
         if not code:
-            code = "".join([str(random.randint(0, 9)) for _ in range(6)])
+            code = "".join([str(secrets.randbelow(exclusive_upper_bound=10)) for _ in range(6)])
         additional_data["code"] = code
         token = TokenManager.generate_token(
             account=account, email=email, token_type="reset_password", additional_data=additional_data
@@ -464,7 +463,7 @@ class AccountService:
 
             raise EmailCodeLoginRateLimitExceededError()
 
-        code = "".join([str(random.randint(0, 9)) for _ in range(6)])
+        code = "".join([str(secrets.randbelow(exclusive_upper_bound=10)) for _ in range(6)])
         token = TokenManager.generate_token(
             account=account, email=email, token_type="email_code_login", additional_data={"code": code}
         )

@@ -19,6 +19,7 @@ import { useModalContext } from '@/context/modal-context'
 import PlanBadge from './plan-badge'
 import LicenseNav from './license-env'
 import { Plan } from '../billing/type'
+import { useGlobalPublicStore } from '@/context/global-public-context'
 
 const navClassName = `
   flex items-center relative mr-0 sm:mr-3 px-3 h-8 rounded-xl
@@ -34,6 +35,7 @@ const Header = () => {
   const [isShowNavMenu, { toggle, setFalse: hideNavMenu }] = useBoolean(false)
   const { enableBilling, plan } = useProviderContext()
   const { setShowPricingModal, setShowAccountSettingModal } = useModalContext()
+  const systemFeatures = useGlobalPublicStore(s => s.systemFeatures)
   const isFreePlan = plan.type === Plan.sandbox
   const handlePlanClick = useCallback(() => {
     if (isFreePlan)
