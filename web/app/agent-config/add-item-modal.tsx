@@ -212,6 +212,26 @@ const AddItemModal: FC<Props> = ({
           {/* 自定义项目信息 */}
           {itemType !== 'app' && (
             <>
+              {/* 图标选择 */}
+              <div>
+                <label className="mb-2 block text-sm font-medium text-text-secondary">
+                  图标
+                </label>
+                <div
+                  className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-lg border border-divider-subtle hover:border-blue-300"
+                  onClick={() => setShowIconPicker(true)}
+                >
+                  <AppIcon
+                    size="medium"
+                    iconType={appIcon.type}
+                    icon={appIcon.type === 'emoji' ? appIcon.icon : ''}
+                    background={appIcon.type === 'emoji' ? appIcon.background : ''}
+                    imageUrl={appIcon.type === 'image' ? appIcon.url : ''}
+                  />
+                </div>
+              </div>
+
+              {/* 名称 */}
               <div>
                 <label className="mb-2 block text-sm font-medium text-text-secondary">
                   名称 *
@@ -223,6 +243,7 @@ const AddItemModal: FC<Props> = ({
                 />
               </div>
 
+              {/* 描述 */}
               <div>
                 <label className="mb-2 block text-sm font-medium text-text-secondary">
                   描述
@@ -230,33 +251,11 @@ const AddItemModal: FC<Props> = ({
                 <Input
                   value={description}
                   onChange={e => setDescription(e.target.value)}
-                  placeholder="请输入描述（可选）"
+                  placeholder="请输入描述"
                 />
               </div>
 
-              <div>
-                <label className="mb-2 block text-sm font-medium text-text-secondary">
-                  图标
-                </label>
-                <div className="flex items-center space-x-3">
-                  <div
-                    className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-lg border border-divider-subtle hover:border-blue-300"
-                    onClick={() => setShowIconPicker(true)}
-                  >
-                    <AppIcon
-                      size="medium"
-                      iconType={appIcon.type}
-                      icon={appIcon.type === 'emoji' ? appIcon.icon : ''}
-                      background={appIcon.type === 'emoji' ? appIcon.background : ''}
-                      imageUrl={appIcon.type === 'image' ? appIcon.url : ''}
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-text-secondary">点击图标选择或更换</p>
-                  </div>
-                </div>
-              </div>
-
+              {/* Markdown内容 */}
               {itemType === 'markdown' && (
                 <div>
                   <label className="mb-2 block text-sm font-medium text-text-secondary">
@@ -265,12 +264,17 @@ const AddItemModal: FC<Props> = ({
                   <Textarea
                     value={markdownContent}
                     onChange={e => setMarkdownContent(e.target.value)}
-                    placeholder="请输入Markdown内容"
-                    rows={6}
+                    placeholder="请输入Markdown内容，支持Markdown语法"
+                    rows={10}
+                    className="font-mono text-sm"
                   />
+                  <div className="mt-2 text-xs text-text-tertiary">
+                    支持Markdown语法：**粗体**、*斜体*、`代码`、[链接](url)、# 标题等
+                  </div>
                 </div>
               )}
 
+              {/* URL */}
               {itemType === 'url' && (
                 <div>
                   <label className="mb-2 block text-sm font-medium text-text-secondary">
@@ -279,29 +283,29 @@ const AddItemModal: FC<Props> = ({
                   <Input
                     value={url}
                     onChange={e => setUrl(e.target.value)}
-                    placeholder="https://example.com"
+                    placeholder="请输入完整的URL地址，如：https://example.com"
+                    type="url"
                   />
                 </div>
               )}
             </>
           )}
+        </div>
 
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="secondary"
-              onClick={handleClose}
-              disabled={isLoading}
-            >
-              取消
-            </Button>
-            <Button
-              variant="primary"
-              onClick={handleSubmit}
-              disabled={isLoading}
-            >
-              {isLoading ? '添加中...' : '添加'}
-            </Button>
-          </div>
+        <div className="mt-6 flex justify-end space-x-2">
+          <Button
+            variant="secondary"
+            onClick={handleClose}
+          >
+            取消
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleSubmit}
+            loading={isLoading}
+          >
+            添加
+          </Button>
         </div>
       </Modal>
 

@@ -47,29 +47,35 @@ const MarkdownPage = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loading />
+      <div className="h-full bg-gray-50 px-6 py-8">
+        <div className="mx-auto max-w-4xl">
+          <div className="flex items-center justify-center py-24">
+            <Loading />
+          </div>
+        </div>
       </div>
     )
   }
 
   if (error || !item) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <p className="mb-4 text-red-500">{error || '内容不存在'}</p>
-          <Button onClick={() => window.history.back()}>
-            返回
-          </Button>
+      <div className="h-full bg-gray-50 px-6 py-8">
+        <div className="mx-auto max-w-4xl">
+          <div className="py-24 text-center">
+            <p className="mb-4 text-red-500">{error || '内容不存在'}</p>
+            <Button onClick={() => window.history.back()}>
+              返回
+            </Button>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-full overflow-auto bg-gray-50">
       {/* 头部 */}
-      <div className="bg-white shadow-sm">
+      <div className="sticky top-0 z-10 bg-white shadow-sm">
         <div className="mx-auto max-w-4xl px-6 py-4">
           <div className="flex items-center space-x-3">
             <span className="text-2xl">{item.icon || '📄'}</span>
@@ -81,13 +87,13 @@ const MarkdownPage = () => {
         </div>
       </div>
 
-      {/* 内容 */}
+      {/* 内容区域 */}
       <div className="mx-auto max-w-4xl px-6 py-8">
         <div className="rounded-lg bg-white p-8 shadow-sm">
-          <div className="prose-gray prose max-w-none prose-headings:text-gray-900 prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-p:text-gray-700 prose-strong:text-gray-900 prose-code:rounded prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-pre:rounded-lg prose-pre:bg-gray-100 prose-pre:p-4">
-            <ReactMarkdown>
-              {item.markdown_content || '暂无内容'}
-            </ReactMarkdown>
+          <div className="prose-gray prose max-w-none prose-headings:text-gray-900 prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-p:leading-relaxed prose-p:text-gray-700 prose-blockquote:border-l-4 prose-blockquote:border-blue-500 prose-blockquote:pl-4 prose-blockquote:italic prose-strong:text-gray-900 prose-code:rounded prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:font-mono prose-code:text-sm prose-pre:rounded-lg prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-ol:list-decimal prose-ul:list-disc prose-li:my-1">
+              <ReactMarkdown>
+                {item.markdown_content || '暂无内容'}
+              </ReactMarkdown>
           </div>
         </div>
       </div>
