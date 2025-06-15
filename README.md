@@ -340,3 +340,172 @@ This repository is available under the [Dify Open Source License](LICENSE), whic
 2. 同一手机号60秒内只能发送一次验证码
 3. 验证码使用后立即失效
 4. 新用户首次登录将自动创建账号
+
+## Docker Deployment Guide
+
+### Prerequisites
+
+Before you begin, ensure you have the following installed:
+- Docker (version 20.10.0 or later)
+- Docker Compose (version 2.0.0 or later)
+
+### Quick Start with Docker
+
+1. **Clone the Repository**
+```bash
+git clone https://github.com/langgenius/dify.git
+cd dify
+```
+
+2. **Configure Environment**
+```bash
+cd docker
+cp .env.example .env
+```
+Edit the `.env` file to configure your environment variables. Key configurations include:
+- Database settings
+- Redis settings
+- Vector store settings
+- Storage settings
+- API and Web URLs
+
+3. **Start Services**
+```bash
+docker compose up -d
+```
+
+4. **Access the Application**
+- Web Console: http://localhost
+- API Service: http://localhost/api
+
+### Building Docker Images
+
+You can build the Docker images locally if you need to customize the build process:
+
+1. **Build Web Image**
+```bash
+cd web
+docker build -t langgenius/dify-web:latest .
+```
+
+2. **Build API Image**
+```bash
+cd api
+docker build -t langgenius/dify-api:latest .
+```
+
+### Docker Compose Services
+
+The `docker-compose.yaml` file includes the following services:
+
+1. **Web Service**
+   - Frontend application
+   - Nginx server
+   - Static file serving
+
+2. **API Service**
+   - Backend API server
+   - Celery workers
+   - Task queue management
+
+3. **Database Services**
+   - PostgreSQL with pgvector
+   - Redis for caching
+   - Vector database (Weaviate/Milvus/OpenSearch)
+
+4. **Additional Services**
+   - Certbot for SSL certificates
+   - OpenTelemetry collector
+   - SSRF proxy
+
+### Environment Variables
+
+Key environment variables in `.env`:
+
+```bash
+# API Configuration
+CONSOLE_API_URL=http://localhost/api
+SERVICE_API_URL=http://localhost/api
+APP_WEB_URL=http://localhost
+
+# Database Configuration
+DB_USERNAME=postgres
+DB_PASSWORD=your_password
+DB_HOST=db
+DB_PORT=5432
+DB_DATABASE=dify
+
+# Redis Configuration
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_PASSWORD=your_password
+
+# Vector Store Configuration
+VECTOR_STORE=weaviate  # Options: weaviate, milvus, opensearch
+WEAVIATE_ENDPOINT=http://weaviate:8080
+
+# Storage Configuration
+STORAGE_TYPE=local  # Options: local, s3, azure, gcs
+```
+
+### Production Deployment
+
+For production deployment, consider the following:
+
+1. **Security**
+   - Use strong passwords
+   - Enable SSL/TLS
+   - Configure proper firewall rules
+   - Set up proper access controls
+
+2. **Performance**
+   - Configure appropriate resource limits
+   - Set up proper caching
+   - Optimize database settings
+
+3. **Monitoring**
+   - Enable OpenTelemetry
+   - Set up logging
+   - Configure health checks
+
+4. **Backup**
+   - Regular database backups
+   - Volume backups
+   - Configuration backups
+
+### Troubleshooting
+
+Common issues and solutions:
+
+1. **Container Startup Issues**
+```bash
+# Check container logs
+docker compose logs [service_name]
+
+# Check container status
+docker compose ps
+```
+
+2. **Database Connection Issues**
+```bash
+# Check database logs
+docker compose logs db
+
+# Test database connection
+docker compose exec db psql -U postgres -d dify
+```
+
+3. **API Service Issues**
+```bash
+# Check API logs
+docker compose logs api
+
+# Restart API service
+docker compose restart api
+```
+
+### Additional Resources
+
+- [Docker Documentation](https://docs.docker.com/)
+- [Docker Compose Documentation](https://docs.docker.com/compose/)
+- [Dify Documentation](https://docs.dify.ai)

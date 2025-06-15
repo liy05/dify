@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation'
 import { RiAddLine, RiDiscordFill, RiGithubFill } from '@remixicon/react'
 import Button from '@/app/components/base/button'
 import AppCard from './AppCard'
-import { useApps } from '@/hooks/use-apps'
+import { useApps } from '@/service/use-apps'
 import Link from 'next/link'
 
 const AppsPage = () => {
