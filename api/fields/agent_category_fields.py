@@ -2,7 +2,24 @@ from flask_restful import fields
 
 from libs.helper import AppIconUrlField, TimestampField
 
-# 应用字段
+# 智能体项目字段（统一支持应用、Markdown、URL类型）
+agent_item_fields = {
+    "id": fields.String,
+    "item_type": fields.String,
+    "name": fields.String,
+    "description": fields.String,
+    "mode": fields.String,
+    "icon_type": fields.String,
+    "icon": fields.String,
+    "icon_background": fields.String,
+    "icon_url": AppIconUrlField,
+    "site_code": fields.String,
+    "app_id": fields.String,
+    "markdown_content": fields.String,
+    "url": fields.String,
+}
+
+# 应用字段（保留兼容性）
 app_simple_fields = {
     "id": fields.String,
     "name": fields.String,
@@ -31,7 +48,7 @@ agent_category_with_apps_fields = {
     "name": fields.String,
     "description": fields.String,
     "position": fields.Integer,
-    "apps": fields.List(fields.Nested(app_simple_fields)),
+    "apps": fields.List(fields.Nested(agent_item_fields)),
     "created_at": TimestampField,
     "updated_at": TimestampField,
 }

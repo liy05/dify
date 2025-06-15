@@ -1,10 +1,9 @@
 'use client'
-import Link from 'next/link'
 import useSWR from 'swr'
 import { RiRobot2Line } from '@remixicon/react'
 import Loading from '@/app/components/base/loading'
 import AppIcon from '@/app/components/base/app-icon'
-import { type AgentCategory, fetchAgentCategories } from '@/service/agent-config'
+import { type AgentCategory, type AgentItem, fetchAgentCategories } from '@/service/agent-config'
 import useDocumentTitle from '@/hooks/use-document-title'
 
 const HomePage = () => {
@@ -16,9 +15,25 @@ const HomePage = () => {
     fetchAgentCategories,
   )
 
+  // 处理项目点击
+  const handleItemClick = (agent: AgentItem) => {
+    if (agent.item_type === 'app') {
+      // 应用类型，跳转到聊天页面
+      window.open(`/chat/${agent.site_code || agent.app_id}`, '_blank')
+    }
+ else if (agent.item_type === 'markdown') {
+      // Markdown类型，打开新页面
+      window.open(`/markdown/${agent.id}`, '_blank')
+    }
+ else if (agent.item_type === 'url') {
+      // URL类型，打开外部链接
+      window.open(agent.url, '_blank', 'noopener,noreferrer')
+    }
+  }
+
   // 只显示有智能体的分类
   const categoriesWithAgents = categoriesData?.categories?.filter(
-    (cat: AgentCategory) => cat.apps.length > 0,
+    (cat: AgentCategory) => cat.apps?.length > 0,
   ) || []
 
   // 错误状态
@@ -81,13 +96,11 @@ const HomePage = () => {
 
                 {/* 工具卡片网格 */}
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-                  {category.apps.map(agent => (
-                    <Link
+                  {category.apps?.map(agent => (
+                    <div
                       key={agent.id}
-                      href={`/chat/${agent.site_code || agent.id}`}
-                      className="group block"
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      onClick={() => handleItemClick(agent)}
+                      className="group block cursor-pointer"
                     >
                       <div className="rounded-lg border border-gray-100 bg-white p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
                         <div className="flex items-center space-x-2.5">
@@ -117,7 +130,7 @@ const HomePage = () => {
                           </div>
                         </div>
                       </div>
-                    </Link>
+                    </div>
                   ))}
                 </div>
               </div>

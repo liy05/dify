@@ -10,14 +10,17 @@ import Toast from '@/app/components/base/toast'
 import { useAppFullList } from '@/service/use-apps'
 import type { App } from '@/types/app'
 import {
+  type AddItemToCategoryRequest,
   type AgentCategory,
   addAppToCategory,
+  addItemToCategory,
   createAgentCategory,
   deleteAgentCategory,
   fetchAgentCategories,
-  removeAppFromCategory,
+  removeItemFromCategory,
   updateAgentCategory,
 } from '@/service/agent-config'
+import AddItemModal from './add-item-modal'
 
 const AgentConfigPage = () => {
   // SWR数据获取
@@ -136,7 +139,33 @@ const AgentConfigPage = () => {
     }
   }
 
-  // 添加智能体到分类
+  // 添加项目到分类
+  const handleAddItem = async (data: AddItemToCategoryRequest) => {
+    if (!selectedCategoryId) return
+
+    setIsLoading(true)
+    try {
+      await addItemToCategory(selectedCategoryId, data)
+      await mutateCategories()
+      setShowAddAgent(false)
+      Toast.notify({
+        type: 'success',
+        message: '项目添加成功',
+      })
+    }
+ catch (error) {
+      console.error('添加项目失败:', error)
+      Toast.notify({
+        type: 'error',
+        message: '添加项目失败',
+      })
+    }
+ finally {
+      setIsLoading(false)
+    }
+  }
+
+  // 添加智能体到分类（保留兼容性）
   const handleAddAgent = async (app: App) => {
     if (!selectedCategoryId) return
 
@@ -164,22 +193,22 @@ const AgentConfigPage = () => {
     }
   }
 
-  // 从分类中移除智能体
+  // 从分类中移除项目
   const handleRemoveAgent = async (categoryId: string, agentId: string) => {
     setIsLoading(true)
     try {
-      await removeAppFromCategory(categoryId, agentId)
+      await removeItemFromCategory(categoryId, agentId)
       await mutateCategories()
       Toast.notify({
         type: 'success',
-        message: '智能体移除成功',
+        message: '项目移除成功',
       })
     }
  catch (error) {
-      console.error('移除智能体失败:', error)
+      console.error('移除项目失败:', error)
       Toast.notify({
         type: 'error',
-        message: '移除智能体失败',
+        message: '移除项目失败',
       })
     }
  finally {
@@ -268,15 +297,22 @@ const AgentConfigPage = () => {
                 </div>
 
                 <div className="mb-3 text-sm text-text-tertiary">
-                  已配置智能体: {category.apps.length}
+                  已配置智能体: {category.apps?.length || 0}
                 </div>
 
                 <div className="space-y-2">
-                  {category.apps.map(agent => (
+                  {category.apps?.map(agent => (
                     <div key={agent.id} className="flex items-center justify-between rounded bg-background-section-burn p-2">
                       <div className="flex items-center">
                         <span className="mr-2">{agent.icon || '🤖'}</span>
-                        <span className="text-sm text-text-secondary">{agent.name}</span>
+                        <div className="flex flex-col">
+                          <span className="text-sm text-text-secondary">{agent.name}</span>
+                          {agent.item_type !== 'app' && (
+                            <span className="text-xs text-text-tertiary">
+                              {agent.item_type === 'markdown' ? '📄 Markdown说明' : '🔗 外部链接'}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <Button
                         variant="tertiary"
@@ -301,7 +337,7 @@ const AgentConfigPage = () => {
                     disabled={isLoading}
                   >
                     <RiAddLine className="mr-1 h-4 w-4" />
-                    添加智能体
+                    添加项目
                   </Button>
                 </div>
               </div>
@@ -402,57 +438,14 @@ const AgentConfigPage = () => {
         </div>
       </Modal>
 
-      {/* 添加智能体弹窗 */}
-      <Modal
+      {/* 添加项目弹窗 */}
+      <AddItemModal
         isShow={showAddAgent}
         onClose={() => setShowAddAgent(false)}
-        title="添加智能体"
-        className="max-w-2xl"
-      >
-        <div className="space-y-4">
-          <p className="text-text-secondary">选择要添加到分类中的智能体：</p>
-          <div className="grid max-h-96 grid-cols-1 gap-4 overflow-y-auto md:grid-cols-2">
-            {availableApps.map((app) => {
-              const category = categories.find(cat => cat.id === selectedCategoryId)
-              const isAdded = category?.apps.some(agent => agent.id === app.id)
-
-              return (
-                <div
-                  key={app.id}
-                  className={`cursor-pointer rounded-lg border p-4 transition-colors ${
-                    isAdded
-                      ? 'border-green-200 bg-green-50'
-                      : 'border-divider-subtle hover:border-blue-300 hover:bg-blue-50'
-                  }`}
-                  onClick={() => !isAdded && !isLoading && handleAddAgent(app)}
-                >
-                  <div className="flex items-start">
-                    <span className="mr-3 text-2xl">{app.icon || '🤖'}</span>
-                    <div className="flex-1">
-                      <h4 className="font-medium text-text-primary">{app.name}</h4>
-                      {app.description && (
-                        <p className="mt-1 text-sm text-text-secondary">{app.description}</p>
-                      )}
-                      {isAdded && (
-                        <span className="mt-2 inline-block text-xs text-green-600">已添加</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-          <div className="flex justify-end">
-            <Button
-              variant="secondary"
-              onClick={() => setShowAddAgent(false)}
-              disabled={isLoading}
-            >
-              完成
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        onAddItem={handleAddItem}
+        availableApps={availableApps}
+        isLoading={isLoading}
+      />
     </div>
   )
 }

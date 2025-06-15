@@ -56,6 +56,38 @@
 
 Dify is an open-source LLM app development platform. Its intuitive interface combines agentic AI workflow, RAG pipeline, agent capabilities, model management, observability features, and more, allowing you to quickly move from prototype to production.
 
+## 🔥 Latest Features
+
+### 首页智能体设置增强
+- **智能体分类管理**: 支持创建分类并管理首页展示的智能体
+- **多种项目类型**: 支持应用、Markdown说明和外部链接三种类型
+- **统一图标选择**: 使用系统统一的图标选择器，支持emoji和自定义图片
+- **Markdown渲染**: Markdown类型项目在独立页面中渲染，支持完整的Markdown语法
+- **外部链接**: URL类型项目点击直接跳转到外部页面
+- **统一管理**: 在智能体配置页面可以统一管理所有类型的项目
+
+#### 功能详情
+1. **项目类型**:
+   - **应用**: 链接到现有的AI应用，点击跳转到聊天页面
+   - **Markdown**: 展示说明文档，点击在新页面中渲染Markdown内容
+   - **URL**: 外部链接，点击跳转到指定网址
+
+2. **图标系统**:
+   - 使用系统统一的AppIconPicker组件
+   - 支持emoji选择和背景色自定义
+   - 支持上传自定义图片作为图标
+   - 与系统其他地方的图标选择保持一致
+
+3. **页面路由**:
+   - 首页: `/home` - 展示所有分类和项目
+   - 智能体配置: `/agent-config` - 管理分类和项目
+   - Markdown渲染: `/markdown/[id]` - 独立页面渲染Markdown内容
+
+4. **数据库结构**:
+   - `agent_categories`: 分类表
+   - `agent_category_apps`: 项目表，支持多种类型
+   - 字段包括: `item_type`, `name`, `description`, `icon`, `icon_background`, `markdown_content`, `url`
+
 ## Quick start
 
 > Before installing Dify, make sure your machine meets the following minimum system requirements:

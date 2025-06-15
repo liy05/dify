@@ -23,24 +23,6 @@ export default function SocialAuth(props: SocialAuthProps) {
   }
   return <>
     <div className='w-full'>
-      <a href={getOAuthLink('/oauth/login/github')}>
-        <Button
-          disabled={props.disabled}
-          className='w-full'
-        >
-          <>
-            <span className={
-              classNames(
-                style.githubIcon,
-                'w-5 h-5 mr-2',
-              )
-            } />
-            <span className="truncate">{t('login.withGitHub')}</span>
-          </>
-        </Button>
-      </a>
-    </div>
-    <div className='w-full'>
       <a href={getOAuthLink('/oauth/login/google')}>
         <Button
           disabled={props.disabled}

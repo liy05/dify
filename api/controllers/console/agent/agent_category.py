@@ -199,9 +199,16 @@ class AgentCategoryAppApi(Resource):
     @login_required
     @account_initialization_required
     def post(self, category_id):
-        """添加应用到分类"""
+        """添加项目到分类（应用、Markdown或URL）"""
         parser = reqparse.RequestParser()
-        parser.add_argument("app_id", type=str, required=True, location="json")
+        parser.add_argument("item_type", type=str, required=True, location="json")  # app, markdown, url
+        parser.add_argument("app_id", type=str, location="json")  # 当类型为app时必需
+        parser.add_argument("name", type=str, location="json")  # 当类型不为app时必需
+        parser.add_argument("description", type=str, location="json")
+        parser.add_argument("icon", type=str, location="json")
+        parser.add_argument("icon_background", type=str, location="json")
+        parser.add_argument("markdown_content", type=str, location="json")  # 当类型为markdown时必需
+        parser.add_argument("url", type=str, location="json")  # 当类型为url时必需
         parser.add_argument("position", type=int, location="json")
         args = parser.parse_args()
 
@@ -221,30 +228,51 @@ class AgentCategoryAppApi(Resource):
         if not category:
             raise NotFound("Category not found")
 
-        # 检查应用是否存在且属于当前租户
-        app = (
-            db.session.query(App)
-            .filter(
-                App.id == args["app_id"],
-                App.tenant_id == current_user.current_tenant_id,
-                App.status == "normal"
-            )
-            .first()
-        )
-        if not app:
-            raise NotFound("App not found")
+        # 验证参数
+        item_type = args["item_type"]
+        if item_type not in ["app", "markdown", "url"]:
+            raise BadRequest("Invalid item_type. Must be 'app', 'markdown', or 'url'")
 
-        # 检查应用是否已经在分类中
-        existing_relation = (
-            db.session.query(AgentCategoryApp)
-            .filter(
-                AgentCategoryApp.category_id == category_id,
-                AgentCategoryApp.app_id == args["app_id"]
+        if item_type == "app":
+            if not args.get("app_id"):
+                raise BadRequest("app_id is required when item_type is 'app'")
+            
+            # 检查应用是否存在且属于当前租户
+            app = (
+                db.session.query(App)
+                .filter(
+                    App.id == args["app_id"],
+                    App.tenant_id == current_user.current_tenant_id,
+                    App.status == "normal"
+                )
+                .first()
             )
-            .first()
-        )
-        if existing_relation:
-            raise BadRequest("App already exists in this category")
+            if not app:
+                raise NotFound("App not found")
+
+            # 检查应用是否已经在分类中
+            existing_relation = (
+                db.session.query(AgentCategoryApp)
+                .filter(
+                    AgentCategoryApp.category_id == category_id,
+                    AgentCategoryApp.app_id == args["app_id"],
+                    AgentCategoryApp.item_type == "app"
+                )
+                .first()
+            )
+            if existing_relation:
+                raise BadRequest("App already exists in this category")
+
+        else:
+            # 非应用类型
+            if not args.get("name"):
+                raise BadRequest("name is required when item_type is not 'app'")
+            
+            if item_type == "markdown" and not args.get("markdown_content"):
+                raise BadRequest("markdown_content is required when item_type is 'markdown'")
+            
+            if item_type == "url" and not args.get("url"):
+                raise BadRequest("url is required when item_type is 'url'")
 
         # 如果没有指定位置，设置为最后
         if not args.get("position"):
@@ -257,7 +285,14 @@ class AgentCategoryAppApi(Resource):
 
         category_app = AgentCategoryApp(
             category_id=category_id,
-            app_id=args["app_id"],
+            app_id=args.get("app_id"),
+            item_type=item_type,
+            name=args.get("name"),
+            description=args.get("description"),
+            icon=args.get("icon"),
+            icon_background=args.get("icon_background"),
+            markdown_content=args.get("markdown_content"),
+            url=args.get("url"),
             position=args["position"],
             created_by=current_user.id,
         )
@@ -265,13 +300,13 @@ class AgentCategoryAppApi(Resource):
         db.session.add(category_app)
         db.session.commit()
 
-        return {"message": "App added to category successfully"}
+        return {"message": f"{item_type.capitalize()} item added to category successfully"}
 
     @setup_required
     @login_required
     @account_initialization_required
     def delete(self, category_id, app_id):
-        """从分类中移除应用"""
+        """从分类中移除项目"""
         # 检查用户权限
         if not current_user.is_editor:
             raise Forbidden()
@@ -288,23 +323,26 @@ class AgentCategoryAppApi(Resource):
         if not category:
             raise NotFound("Category not found")
 
-        # 查找并删除关联
+        # 查找并删除关联 (app_id在这里实际上可能是item_id)
         category_app = (
             db.session.query(AgentCategoryApp)
             .filter(
                 AgentCategoryApp.category_id == category_id,
-                AgentCategoryApp.app_id == app_id
+                db.or_(
+                    AgentCategoryApp.app_id == app_id,  # 兼容旧的应用删除
+                    AgentCategoryApp.id == app_id       # 新的通用项目删除
+                )
             )
             .first()
         )
         
         if not category_app:
-            raise NotFound("App not found in this category")
+            raise NotFound("Item not found in this category")
 
         db.session.delete(category_app)
         db.session.commit()
 
-        return {"message": "App removed from category successfully"}
+        return {"message": "Item removed from category successfully"}
 
 
 # 注册路由
