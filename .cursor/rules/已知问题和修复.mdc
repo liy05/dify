@@ -1,0 +1,155 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# 已知问题和修复
+
+本文档基于项目历史记录常见问题及其解决方案。
+
+## 最近修复
+
+### 前端应用页面错误 (2025-01-15)
+**问题**: 访问 `/app` 页面时出现 `Uncaught TypeError: (0 , R.useApps) is not a function` 错误。
+
+**根本原因**: 
+- `page.tsx` 导入了不存在的 `useApps` hook，从 `@/service/use-apps`
+- 重复实现，而 `Apps.tsx` 组件已经存在并具有正确的数据获取功能
+
+**解决方案**: 
+简化 [web/app/(commonLayout)/apps/page.tsx](mdc:web/app/(commonLayout)/apps/page.tsx) 以使用现有的 `Apps` 组件：
+```typescript
+// 修复后的实现
+import Apps from './Apps'
+const AppsPage = () => {
+  return <Apps />
+}
+```
+
+**经验教训**: 在创建新的hooks或组件之前，始终检查现有实现。
+
+### 数据库迁移冲突 (2025-06-15)
+**问题**: Flask迁移过程中出现 `Can't locate revision identified by '312d665c855e'` 错误。
+
+**根本原因**:
+- 多个迁移文件使用相同的修订ID
+- 迁移链中的父修订引用不正确
+
+**解决方案**:
+1. 将冲突的修订ID从 `312d665c855e` 更新为 `8f3d2a1b9c4e`
+2. 修复迁移链引用
+3. 最终迁移链: `4474872b0ee6 → 42acf6f0e0fb → 8f3d2a1b9c4e → add_agent_item_types`
+
+**命令**:
+```bash
+cd api
+uv run flask db current    # 检查当前版本
+uv run flask db upgrade    # 应用迁移
+uv run flask db history    # 查看迁移链
+```
+
+**预防措施**: 
+- 为修订ID使用唯一的12字符哈希值
+- 创建新迁移前始终检查现有迁移链
+- 使用描述性消息但唯一标识符
+
+## 智能体主页增强功能
+
+### 智能分类管理
+**新功能**: 支持分类的增强智能体管理系统。
+
+**核心组件**:
+- **分类**: 创建和管理智能体分类
+- **项目类型**: 支持应用、Markdown文档和外部URL
+- **统一图标**: 系统范围的图标选择器，支持emoji和自定义图片
+- **Markdown渲染**: 文档的独立页面渲染
+
+**数据库架构**:
+- `agent_categories` - 分类管理
+- `agent_category_apps` - 支持类型的项目条目
+- 字段: `item_type`、`name`、`description`、`icon`、`icon_background`、`markdown_content`、`url`
+
+**页面**:
+- `/home` - 显示分类和项目
+- `/agent-config` - 管理分类和项目  
+- `/markdown/[id]` - 渲染Markdown内容
+
+## 手机验证码登录
+
+**功能**: 使用阿里云短信服务的短信验证码登录系统。
+
+**必需的环境变量**:
+```bash
+ALIYUN_ACCESS_KEY_ID=your_access_key_id
+ALIYUN_ACCESS_KEY_SECRET=your_access_key_secret
+ALIYUN_SMS_SIGN_NAME=your_sign_name
+ALIYUN_SMS_TEMPLATE_CODE=your_template_code
+SMS_CODE_EXPIRE_SECONDS=300
+```
+
+**API端点**:
+- `POST /auth/phone/send-code` - 发送验证码
+- `POST /auth/phone/login` - 手机+验证码登录
+
+**安全注意事项**:
+- 5分钟验证码过期
+- 每个手机号60秒速率限制
+- 一次性验证码使用
+- 新用户自动创建账户
+
+## 常见故障排除
+
+### 前端构建问题
+```bash
+# 清理Next.js缓存
+cd web
+rm -rf .next
+pnpm install
+pnpm build
+```
+
+### 后端导入错误
+```bash
+# 重新安装依赖
+cd api
+uv sync --reinstall
+```
+
+### Docker权限问题
+```bash
+# 修复Linux上的Docker权限
+sudo chown -R $USER:$USER docker/volumes/
+```
+
+### 数据库连接问题
+1. 验证PostgreSQL正在运行
+2. 检查 `.env` 中的连接凭据
+3. 确保已安装pgvector扩展
+4. 测试连接: `docker compose exec db psql -U postgres dify`
+
+### 向量数据库问题
+- **Weaviate**: 检查服务是否在端口8080上运行
+- **Milvus**: 验证docker-compose中的配置
+- **OpenSearch**: 检查内存限制和堆大小
+
+## 开发最佳实践
+
+### 进行更改之前
+1. 检查代码库中的现有实现
+2. 查看数据库更改的最近迁移历史
+3. 使用Docker Compose在本地测试更改
+4. 运行前端和后端测试
+
+### 迁移最佳实践
+1. 主要迁移前始终备份数据库
+2. 使用描述性迁移消息
+3. 首先在开发数据上测试迁移
+4. 保持迁移小而专注
+
+### 代码审查检查清单
+- [ ] 无重复实现
+- [ ] 正确的错误处理
+- [ ] 迁移文件具有唯一的修订ID
+- [ ] 环境变量已记录
+- [ ] 新功能的测试已更新
+

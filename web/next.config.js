@@ -24,7 +24,7 @@ const nextConfig = {
   basePath,
   assetPrefix,
   webpack: (config, { dev, isServer }) => {
-    config.plugins.push(codeInspectorPlugin({ bundler: 'webpack' }))
+    // config.plugins.push(codeInspectorPlugin({ bundler: 'webpack' }))
     return config
   },
   productionBrowserSourceMaps: false, // enable browser source map generation during the production build

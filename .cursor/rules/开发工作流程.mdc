@@ -1,0 +1,167 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# 开发工作流程指南
+
+## 快速开始
+
+### 前置要求
+- Python 3.10+ 带 `uv` 包管理器
+- Node.js 18+ 带 `pnpm`
+- Docker 和 Docker Compose
+- PostgreSQL 带 pgvector 扩展
+
+### 本地开发环境设置
+
+**方案1: Docker Compose（推荐）**
+```bash
+cd docker
+cp .env.example .env
+# 编辑.env文件配置你的环境
+docker compose up -d
+```
+访问地址: http://localhost/install
+
+**方案2: 手动设置**
+```bash
+# 后端
+cd api
+uv sync
+uv run flask db upgrade
+uv run flask run --host 0.0.0.0 --port=5001 --debug # 启动开发服务器（调试模式）
+
+# 前端  
+cd web
+pnpm install
+pnpm dev
+```
+
+## 包管理
+
+### Python后端 (`uv`)
+- **安装**: `uv sync` - 从锁定文件安装所有依赖
+- **添加包**: `uv add package-name` - 添加新依赖
+- **开发包**: `uv add --dev package-name` - 添加开发依赖
+- **更新**: `uv sync --upgrade` - 更新依赖
+- **锁定**: `uv lock` - 生成/更新锁定文件
+
+### 前端 (`pnpm`)
+- **安装**: `pnpm install` - 安装依赖
+- **添加包**: `pnpm add package-name` - 添加依赖
+- **开发包**: `pnpm add -D package-name` - 添加开发依赖
+- **更新**: `pnpm update` - 更新依赖
+
+## 数据库管理
+
+### 迁移（在 `api` 目录下使用 `uv run` 前缀）
+```bash
+cd api
+uv run flask db current           # 检查当前迁移版本
+uv run flask db upgrade          # 应用待处理的迁移
+uv run flask db downgrade        # 回滚一个迁移
+uv run flask db revision -m "description"  # 创建新迁移
+uv run flask db history          # 查看迁移历史
+```
+
+### 常见迁移问题
+- **版本冲突**: 确保迁移文件中的修订ID唯一
+- **缺失依赖**: 检查父修订引用
+- **迁移失败**: 使用 `uv run flask db stamp head` 进行紧急修复
+
+## 测试
+
+### 后端测试
+```bash
+cd api
+uv run pytest                    # 运行所有测试
+uv run pytest tests/unit_tests   # 仅单元测试
+uv run pytest tests/integration_tests  # 集成测试
+uv run pytest -v                # 详细输出
+```
+
+### 前端测试
+```bash
+cd web
+pnpm test                       # 运行Jest测试
+pnpm test:watch                 # 监视模式
+pnpm lint                       # ESLint检查
+pnpm type-check                 # TypeScript检查
+```
+
+## 代码质量
+
+### Python（后端）
+```bash
+cd api
+uv run black .                  # 代码格式化
+uv run flake8                   # 代码检查
+uv run mypy                     # 类型检查
+```
+
+### TypeScript（前端）
+```bash
+cd web
+pnpm lint                       # ESLint
+pnpm lint:fix                   # 自动修复问题
+pnpm type-check                 # TypeScript编译器
+```
+
+## 环境配置
+
+### 环境文件
+- [docker/.env.example](mdc:docker/.env.example) - Docker设置模板
+- 复制到 `.env` 并为你的环境自定义
+- **永远不要提交** 包含密钥的 `.env` 文件
+
+### 关键环境变量
+```bash
+# 数据库
+DB_USERNAME=postgres
+DB_PASSWORD=your_password
+DB_HOST=localhost
+DB_PORT=5432
+
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# API URLs
+CONSOLE_API_URL=http://localhost:5001
+SERVICE_API_URL=http://localhost:5001
+```
+
+## 调试
+
+### 后端调试
+- Flask调试模式: `uv run flask run --host 0.0.0.0 --port=5001 --debug`
+- 使用Python调试器: `import pdb; pdb.set_trace()`
+- 检查日志: `docker compose logs api`
+
+### 前端调试
+- Next.js调试模式: `NODE_ENV=development`
+- 浏览器开发工具用于React组件
+- 在浏览器中检查网络请求
+
+## 部署
+
+### Docker构建
+```bash
+# 构建后端
+cd api
+docker build -t dify-api .
+
+# 构建前端
+cd web  
+docker build -t dify-web .
+```
+
+### 生产检查清单
+- [ ] 设置安全的环境变量
+- [ ] 配置正确的数据库连接
+- [ ] 设置SSL证书
+- [ ] 配置正确的CORS设置
+- [ ] 设置监控和日志记录
+
+

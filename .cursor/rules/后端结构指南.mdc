@@ -1,0 +1,108 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# 后端结构指南
+
+后端位于 [api/](mdc:api/) 目录，使用 Python Flask 和 SQLAlchemy ORM。
+
+## 核心配置文件
+- [api/app.py](mdc:api/app.py) - Flask应用入口点
+- [api/app_factory.py](mdc:api/app_factory.py) - 应用工厂模式
+- [api/configs/](mdc:api/configs/) - 配置管理
+- [api/requirements.txt](mdc:api/requirements.txt) - Python依赖
+
+## 目录结构
+
+### 核心业务逻辑 ([api/core/](mdc:api/core/))
+Dify功能的核心：
+- **AI集成**: 
+  - `model_runtime/` - LLM提供商集成（OpenAI、Anthropic等）
+  - `llm_generator/` - 文本生成和处理
+  - `agent/` - AI智能体能力和工具
+- **工作流引擎**: 
+  - `workflow/` - 可视化工作流执行引擎
+  - `prompt/` - 提示词管理和模板
+- **数据处理**:
+  - `rag/` - 检索增强生成管道
+  - `file/` - 文件上传和处理
+  - `indexing_runner.py` - 文档索引
+- **工具和扩展**:
+  - `tools/` - 智能体的内置和自定义工具
+  - `extension/` - 插件系统
+
+### API层 ([api/controllers/](mdc:api/controllers/))
+按客户端类型组织的HTTP请求处理：
+- `web/` - Web应用API
+- `console/` - 管理控制台API  
+- `service_api/` - 外部服务API
+- `inner_api/` - 内部微服务API
+- `files/` - 文件上传/下载端点
+
+### 数据层 ([api/models/](mdc:api/models/))
+SQLAlchemy数据库模型：
+- `account.py` - 用户管理
+- `dataset.py` - 知识库数据
+- `app.py` - 应用定义
+- `workflow.py` - 工作流配置
+
+### 业务服务 ([api/services/](mdc:api/services/))
+控制器和核心之间的业务逻辑层：
+- **认证**: `auth/` 目录
+- **数据管理**: 数据集、文档和知识服务
+- **应用逻辑**: 应用创建、管理和执行
+- **企业功能**: SSO、访问控制、分析
+
+### 数据库 ([api/migrations/](mdc:api/migrations/))
+- **工具**: Flask-Migrate（底层使用Alembic）
+- **模式**: 增量模式变更，支持回滚
+- **文件**: 版本控制的迁移脚本
+
+### 后台任务 ([api/tasks/](mdc:api/tasks/))
+基于Celery的异步处理：
+- 文档索引和处理
+- 批量操作
+- 清理任务
+- 邮件通知
+
+## 开发命令
+
+**使用 `uv`（推荐的包管理器）:**
+```bash
+cd api
+uv sync                    # 安装依赖
+uv run flask run          # 启动开发服务器
+uv run flask db upgrade   # 运行数据库迁移
+uv run celery worker      # 启动后台worker
+```
+
+**数据库操作:**
+```bash
+uv run flask db current   # 检查当前迁移
+uv run flask db upgrade   # 应用迁移
+uv run flask db downgrade # 回滚迁移
+uv run flask db revision  # 创建新迁移
+```
+
+## 核心模式
+
+### 配置管理
+- [api/configs/](mdc:api/configs/) 中的基于环境的配置
+- 功能标志和部署特定设置
+- 安全凭据管理
+
+### 错误处理
+- `core/errors/` 中的自定义异常类
+- 集中化错误处理中间件
+- 结构化错误响应
+
+### 认证和授权
+- 基于JWT的认证
+- 基于角色的访问控制（RBAC）
+- 企业SSO集成
+
+### API设计
+- 一致模式的RESTful端点
+- 请求/响应验证
+- 速率限制和安全中间件

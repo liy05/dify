@@ -1,0 +1,66 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# 前端结构指南
+
+前端位于 [web/](mdc:web/) 目录，使用 Next.js 14+ 的 App Router。
+
+## 核心配置文件
+- [web/package.json](mdc:web/package.json) - 依赖和脚本
+- [web/next.config.mjs](mdc:web/next.config.mjs) - Next.js配置
+- [web/tailwind.config.js](mdc:web/tailwind.config.js) - Tailwind CSS配置
+- [web/tsconfig.json](mdc:web/tsconfig.json) - TypeScript配置
+- [web/eslint.config.mjs](mdc:web/eslint.config.mjs) - ESLint配置
+
+## 目录结构
+
+### 页面和路由 ([web/app/](mdc:web/app/))
+- 使用Next.js App Router的基于文件的路由
+- **布局文件**: [web/app/layout.tsx](mdc:web/layout.tsx) - 根布局
+- **主要页面**:
+  - `home/` - 仪表板和智能体主页
+  - `signin/` - 认证页面
+  - `agent-config/` - 智能体配置界面
+  - `(commonLayout)/` - 已认证页面的共享布局
+  - `(shareLayout)/` - 共享/公开页面的布局
+
+### 组件 ([web/components/](mdc:web/components/))
+- 可复用的React组件
+- **UI组件**: 基础UI元素（按钮、输入框、模态框）
+- **业务组件**: 领域特定组件（应用卡片、工作流节点）
+- **布局组件**: 头部、侧边栏、导航
+
+### 服务 ([web/service/](mdc:web/service/))
+- API通信层
+- **模式**: 每个服务文件对应后端API端点
+- **数据获取**: 使用SWR进行缓存和同步
+- **示例**: `apps.ts` 用于应用管理API
+
+### 钩子 ([web/hooks/](mdc:web/hooks/))
+- 可复用逻辑的自定义React钩子
+- **通用模式**: 
+  - `use-*` 命名约定
+  - 状态管理钩子
+  - API集成钩子
+
+### 国际化 ([web/i18n/](mdc:web/i18n/))
+- 支持20+语言，包括英语、中文、日语、德语
+- **结构**: 每种语言有自己的目录（如 `en-US/`、`zh-Hans/`）
+- **文件**: 按功能区域组织（common、app、dataset等）
+
+### 样式
+- **框架**: Tailwind CSS 实用优先的样式
+- **主题文件**: [web/themes/](mdc:web/themes/) 支持暗色/亮色模式
+- **全局样式**: [web/app/styles/](mdc:web/app/styles/)
+
+## 开发命令
+```bash
+cd web
+pnpm install          # 安装依赖
+pnpm dev             # 启动开发服务器
+pnpm build           # 构建生产版本
+pnpm lint            # 运行ESLint
+pnpm type-check      # 运行TypeScript检查
+```

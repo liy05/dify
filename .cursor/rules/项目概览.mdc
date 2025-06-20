@@ -1,0 +1,48 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Dify 项目概览
+
+Dify 是一个开源的大语言模型应用开发平台，具有直观的界面，结合了智能体AI工作流、RAG管道、智能体能力、模型管理和可观测性功能。
+
+## 项目结构
+
+这是一个全栈应用，包含两个主要组件：
+
+### 前端 ([web/](mdc:web/))
+- **技术栈**: Next.js 14+ with TypeScript 和 Tailwind CSS
+- **主要组件**: AI应用界面、工作流构建器、模型管理的React组件
+- **核心目录**:
+  - `app/` - Next.js应用路由页面和布局
+  - `components/` - 可复用的React组件
+  - `service/` - API服务层和数据获取
+  - `hooks/` - 自定义React钩子
+  - `i18n/` - 国际化文件（支持20+语言）
+  - `models/` - TypeScript类型定义
+
+### 后端 ([api/](mdc:api/))
+- **技术栈**: Python Flask with SQLAlchemy ORM
+- **主要功能**: AI模型集成、工作流引擎、用户管理、文件处理
+- **核心目录**:
+  - `core/` - 核心业务逻辑（AI模型、工作流、RAG、工具）
+  - `controllers/` - API端点和请求处理
+  - `models/` - 数据库模型和模式
+  - `services/` - 业务逻辑服务
+  - `migrations/` - 数据库迁移文件
+
+## 核心功能
+- 用于AI应用的可视化工作流构建器
+- 支持100+大语言模型提供商（OpenAI、Anthropic、本地模型）
+- RAG管道，包含文档摄取和检索
+- 智能体能力，内置50+工具
+- 多语言支持（20+语言）
+- 企业功能（SSO、访问控制）
+
+## 开发工具
+- **包管理器**: `uv` 用于Python依赖
+- **前端**: `pnpm` 用于Node.js依赖  
+- **数据库**: PostgreSQL with pgvector 用于向量嵌入
+- **部署**: Docker Compose 用于本地开发
+- **迁移**: Flask-Migrate 用于数据库模式变更
